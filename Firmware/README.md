@@ -15,9 +15,30 @@
 
 #### 使用说明
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+- 运行 `start_gui.exe`
+
+![alt text](/image-6.png)
+
+- 配置运行 GDB 服务
+
+![alt text](/image-7.png)
+
+- 成功连接后终端将显示如下信息：
+
+![alt text](/image-8.png)
+
+**2.2 使用 SEGGER 烧录程序**
+- 进入图示路径，双击自动启动 SEGGER Embedded Studio
+
+![alt text](/image-9.png)
+
+- 执行 Clean → Build 编译工程
+
+![alt text](/image-10.png)
+
+- 最后启动运行
+
+![alt text](/image-11.png)
 
 #### 参与贡献
 

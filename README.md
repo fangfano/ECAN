@@ -68,33 +68,8 @@ https://www.zhiyuan-robot.com/DOCS/PM/DCU
 - SEGGER Embedded Studio（开发工具）
 - TwinCAT 3（作为 EtherCAT 主站）
 
-##### 2. 固件烧录
+##### 2. 编辑并下载固件
 
-**2.1 使用 HPM SDK 项目生成器连接对应开发板**
-- 运行 `start_gui.exe`
-
-![alt text](image-6.png)
-
-- 配置运行 GDB 服务
-
-![alt text](image-7.png)
-
-- 成功连接后终端将显示如下信息：
-
-![alt text](image-8.png)
-
-**2.2 使用 SEGGER 烧录程序**
-- 进入图示路径，双击自动启动 SEGGER Embedded Studio
-
-![alt text](image-9.png)
-
-- 执行 Clean → Build 编译工程
-
-![alt text](image-10.png)
-
-- 最后启动运行
-
-![alt text](image-11.png)
 
 ##### 3. EtherCAT 从站连接（TwinCAT 配置）
 

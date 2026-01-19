@@ -1,0 +1,6 @@
+# ninja log v5
+0	56273	0	CMakeFiles/localize_sdk	36e0b804754906e8
+0	56273	0	C:/sdk_env_v1.10.1/sdk_env_v1.10.0/hpm_sdk/samples/ethercat/ecat_io/hpm5e00evk_flash_xip_debug/CMakeFiles/localize_sdk	36e0b804754906e8
+2	3185	7883317016683364	build.ninja	2e86a093ade3828d
+1	14508	0	CMakeFiles/localize_sdk	36e0b804754906e8
+1	14508	0	C:/sdk_env_v1.10.1/sdk_env_v1.10.0/hpm_sdk/samples/ethercat/ecat_io/hpm5e00evk_flash_xip_debug/CMakeFiles/localize_sdk	36e0b804754906e8

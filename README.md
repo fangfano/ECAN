@@ -1,12 +1,12 @@
 # KH-EtherCAT-CANFDX4-OP
 
-EtherCAT ↔ 4× CAN FD 双向数据桥接开源解决方案
+EtherCAT ↔ 4× CAN FD 双向数据转发开源解决方案
 
 ---
 
 #### 🌟 介绍
 
-KH-EtherCAT-CANFDX4-OP 是一款开源硬件模块，模块基于 HPMicro HPM5E31 微控制器开发，实现 EtherCAT 与 四通道 CAN FD 总线之间的实时双向数据桥接。
+KH-EtherCAT-CANFDX4-OP 是一款开源硬件模块，模块基于 HPMicro HPM5E31 微控制器开发，实现 EtherCAT 与 四通道 CAN FD 总线之间的实时双向数据转发。
 
 模块主要功能：
 - **Input（输入）**：ECAT 主站 → ECAT 从站（接收 CAN 数据，或接收主站下发的状态/控制指令）
@@ -24,24 +24,56 @@ KH-EtherCAT-CANFDX4-OP 是一款开源硬件模块，模块基于 HPMicro HPM5E3
 - 开源方案降低工业通信集成成本
 
 ---
+#### 📦 开源与商业化支持
 
+本项目开源硬件设计方案及基础测试固件源码。开源用户可参考本项目内容自行设计软硬件。
+
+##### 开源支持说明
+
+- 我们不对开源用户提供单独的技术支持
+- 相关技术问题可在本项目新建 [Issue](https://gitee.com/ChengDu-KunHong/kh-ethercat-canfdx4-op/issues)
+- 采购成品板卡的用户，我们对板卡提供 3 个月硬件质保
+
+##### 用户基础要求
+
+用户需具备以下基础，或自行学习相关内容，我们不提供相关软件和技术支持：
+
+- EtherCAT 主站软件使用
+- EtherCAT 从站固件开发
+- CAN FD 相关基础知识
+- HPM 先楫芯片开发基础
+
+##### 商业化定制支持
+
+本项目支持按客户需求进行商业化定制，包括但不限于：
+
+- **硬件定制**：尺寸、接口、温度等级、防护要求等
+- **固件定制**：ESI 文件修改、通讯协议、其他固件功能
+
+##### 成品板卡购买
+
+Coming soon
+
+##### 联系我们
+
+- 联系方式：[点击查看](https://gitee.com/ChengDu-KunHong/cd-kunhong#%E8%81%94%E7%B3%BB%E6%88%91%E4%BB%AC)
+
+---
 #### 🛠️ 硬件架构
-
-硬件架构说明
-
 ![alt text](images/image.png)
 
-##### 主控：HPM5E31
+详细硬件设计详细说明请参考 [Hardware/README.md](Hardware/README.md#-硬件架构)
 
-![alt text](images/image-1.png)
+#### 💾 固件
+**功能测试固件**
 
-##### EtherCAT
+本项目提供开源测试固件，开源测试固件可满足基本的硬件测试验证。
+测试固件具备以下特性
 
-![alt text](images/image-2.png)
-
-##### 四通道 CAN FD
-
-![alt text](images/image-3.png)
+ - EtherCAT从站，包含PHY配置和先楫内置ESC驱动代码，可连接TwinCAT进行测试
+ - 4通道CANFD驱动，支持独立的4路CANFD进行报文收发
+ - 协议转发demo，固件包含EtherCAT转4路CANFD转发逻辑。连接TwinCAT后可进行4路CANFD报文的收发内容控制
+测试固件代码及文档详见[Frimware/README.md](Firmware\README.md)
 
 ##### 通讯协议
 

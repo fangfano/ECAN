@@ -44,7 +44,7 @@ CAN 发送帧
 
 本设备作为 EtherCAT 从站设备的对象字典，配置 10 组输入对象和 10 组输出，每组可存储最多 30 字节的数据（以 STRING(30) 格式表示）。
 
-![配置表](image.png)
+![配置表](./images/image.png)
 
 ### EtherCAT 与 CAN 映射
 
@@ -54,7 +54,7 @@ CAN 发送帧
 
 以 TwinCAT 显示为例：
 
-![alt text](image-1.png)
+![alt text](./images/image-1.png)
 
 #### 输入过程数据映射
 
@@ -109,26 +109,26 @@ CAN 发送帧
 
 - 运行 `start_gui.exe`
 
-![alt text](/image-6.png)
+![alt text](./images/image-6.png)
 
 - 配置运行 GDB 服务
 
-![alt text](/image-7.png)
+![alt text](./images/image-7.png)
 
 - 成功连接后终端将显示如下信息：
 
-![alt text](/image-8.png)
+![alt text](./images/image-8.png)
 
 ### 使用 SEGGER 烧录程序
 
 - 进入图示路径，双击自动启动 SEGGER Embedded Studio
 
-![alt text](/image-9.png)
+![alt text](./images/image-9.png)
 
 - 执行 Clean → Build 编译工程
 
-![alt text](/image-10.png)
+![alt text](./images/image-10.png)
 
 - 最后启动运行
 
-![alt text](/image-11.png)
+![alt text](./images/image-11.png)

@@ -12,7 +12,7 @@ KH-EtherCAT-CANFDX4-OP 是一款开源硬件模块，模块基于 HPMicro HPM5E3
 - **Input（输入）**：ECAT 主站 → ECAT 从站（接收 CAN 数据，或接收主站下发的状态/控制指令）
 - **Output（输出）**：ECAT 从站 → ECAT 主站（发送 CAN 数据，或向上层反馈状态）
 
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 
 ---
 
@@ -29,19 +29,19 @@ KH-EtherCAT-CANFDX4-OP 是一款开源硬件模块，模块基于 HPMicro HPM5E3
 
 硬件架构说明
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 ##### 主控：HPM5E31
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 ##### EtherCAT
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 ##### 四通道 CAN FD
 
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 
 ##### 通讯协议
 
@@ -78,7 +78,7 @@ https://www.zhiyuan-robot.com/DOCS/PM/DCU
 
 - 成功连接后，TwinCAT I/O 映射界面将显示如下：
 
-![alt text](image-12.png)
+![alt text](images/image-12.png)
 
 > ⚠️ 若未识别设备，请确认：
 > 1. EtherCAT 网线连接正常
@@ -91,16 +91,16 @@ https://www.zhiyuan-robot.com/DOCS/PM/DCU
 - 使用对端 CAN 设备，向 CAN0 通道发送数据（例如：ID=0x100，64 字节全为 0xFF）
 - 在 TwinCAT 的 RxCan 区域查看数组，应能读取到对应数据：
 
-![alt text](image-13.png)
+![alt text](images/image-13.png)
 
 **4.2 CAN 数据发送测试（从站 → 外部设备）**
 - 在 TwinCAT 的 TxCan 区域修改数组内容（例如：将 TxCan0 字节设置为全 AA）
 
-![alt text](image-15.png)
+![alt text](images/image-15.png)
 
 - 对端 CAN 设备应收到对应报文：
 
-![alt text](image-14.png)
+![alt text](images/image-14.png)
 
 > 📌 注意：每路 CAN 通道映射 75 字节缓冲区（实际使用前 64 字节）
 
@@ -110,7 +110,7 @@ https://www.zhiyuan-robot.com/DOCS/PM/DCU
 
 - TwinCAT 显示从站状态为 OP（Operational）
 
-![alt text](image-16.png)
+![alt text](images/image-16.png)
 
 - CAN 收发数据与预期一致
 - TwinCAT 无异常错误告警

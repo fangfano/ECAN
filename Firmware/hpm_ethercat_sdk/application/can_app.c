@@ -510,6 +510,7 @@ void can_app_process_txcan_transmit(void)
 {
     mcan_tx_frame_t tx_frame;
     hpm_stat_t status;
+    static hpm_stat_t last_error_status = 0;
 
     if (!s_can0_transmit_initialized) {
         return;
@@ -527,11 +528,11 @@ void can_app_process_txcan_transmit(void)
     extern CHAR TxCan10x701E[30];
     extern CHAR TxCan20x703C[30];
 
-    /* Extract CAN ID from TxCan0[0-3] */
-    uint32_t can_id = TxCan00x7000[0] |
-                     ((uint32_t)TxCan00x7000[1] << 8) |
-                     ((uint32_t)TxCan00x7000[2] << 16) |
-                     ((uint32_t)TxCan00x7000[3] << 24);
+    /* Extract CAN ID from TxCan0[0-3] (big-endian format) */
+    uint32_t can_id = ((uint32_t)TxCan00x7000[0] << 24) |
+                     ((uint32_t)TxCan00x7000[1] << 16) |
+                     ((uint32_t)TxCan00x7000[2] << 8) |
+                     TxCan00x7000[3];
 
     /* Extract DLC from TxCan0[4], limit to 15 (0x0F) */
     uint8_t dlc = TxCan00x7000[4];
@@ -549,7 +550,7 @@ void can_app_process_txcan_transmit(void)
     }
     tx_frame.dlc = dlc;
     tx_frame.canfd_frame = 1;
-    tx_frame.bitrate_switch = 1;
+    tx_frame.bitrate_switch = 0;
 
     /* Layout: [0-3]=ID, [4]=DLC, [5-29]=data (25 bytes) in TxCan0 */
     /* Combine data from TxCan0[5-29] (25 bytes) + TxCan1 (30 bytes) + TxCan2[0-14] (15 bytes) */
@@ -561,8 +562,12 @@ void can_app_process_txcan_transmit(void)
     if (status == status_success) {
         s_can_led_state[0].tx_active = true;
         s_can_led_state[0].tx_last_tick = s_timer_tick;
+        last_error_status = 0;
     } else {
-        printf("Failed to transmit CAN FD frame on CAN0, status: %d\n", status);
+        if (status != last_error_status) {
+            printf("Failed to transmit CAN FD frame on CAN0, status: %d\n", status);
+            last_error_status = status;
+        }
     }
 }
 
@@ -740,6 +745,7 @@ void can_app_process_txcan1_transmit(void)
 {
     mcan_tx_frame_t tx_frame;
     hpm_stat_t status;
+    static hpm_stat_t last_error_status = 0;
 
     if (!s_can1_transmit_initialized) {
         return;
@@ -757,11 +763,11 @@ void can_app_process_txcan1_transmit(void)
     extern CHAR TxCan30x705A[30];
     extern CHAR TxCan40x7078[30];
 
-    /* Extract CAN ID from TxCan2[15-18] */
-    uint32_t can_id = TxCan20x703C[15] |
-                     ((uint32_t)TxCan20x703C[16] << 8) |
-                     ((uint32_t)TxCan20x703C[17] << 16) |
-                     ((uint32_t)TxCan20x703C[18] << 24);
+    /* Extract CAN ID from TxCan2[15-18] (big-endian format) */
+    uint32_t can_id = ((uint32_t)TxCan20x703C[15] << 24) |
+                     ((uint32_t)TxCan20x703C[16] << 16) |
+                     ((uint32_t)TxCan20x703C[17] << 8) |
+                     TxCan20x703C[18];
 
     /* Extract DLC from TxCan2[19], limit to 15 (0x0F) */
     uint8_t dlc = TxCan20x703C[19];
@@ -779,7 +785,7 @@ void can_app_process_txcan1_transmit(void)
     }
     tx_frame.dlc = dlc;
     tx_frame.canfd_frame = 1;
-    tx_frame.bitrate_switch = 1;
+    tx_frame.bitrate_switch = 0;
 
     /* Layout: TxCan2[15-18]=ID, [19]=DLC, [20-29]=data (10 bytes), TxCan3 (30), TxCan4 (30) */
     memcpy(&tx_frame.data_8[0], &TxCan20x703C[20], 10);
@@ -790,8 +796,12 @@ void can_app_process_txcan1_transmit(void)
     if (status == status_success) {
         s_can_led_state[1].tx_active = true;
         s_can_led_state[1].tx_last_tick = s_timer_tick;
+        last_error_status = 0;
     } else {
-        printf("Failed to transmit CAN FD frame on CAN1, status: %d\n", status);
+        if (status != last_error_status) {
+            printf("Failed to transmit CAN FD frame on CAN1, status: %d\n", status);
+            last_error_status = status;
+        }
     }
 }
 
@@ -969,6 +979,7 @@ void can_app_process_txcan2_transmit(void)
 {
     mcan_tx_frame_t tx_frame;
     hpm_stat_t status;
+    static hpm_stat_t last_error_status = 0;
 
     if (!s_can2_transmit_initialized) {
         return;
@@ -986,11 +997,11 @@ void can_app_process_txcan2_transmit(void)
     extern CHAR TxCan60x70B4[30];
     extern CHAR TxCan70x70D2[30];
 
-    /* Extract CAN ID from TxCan5[0-3] */
-    uint32_t can_id = TxCan50x7096[0] |
-                     ((uint32_t)TxCan50x7096[1] << 8) |
-                     ((uint32_t)TxCan50x7096[2] << 16) |
-                     ((uint32_t)TxCan50x7096[3] << 24);
+    /* Extract CAN ID from TxCan5[0-3] (big-endian format) */
+    uint32_t can_id = ((uint32_t)TxCan50x7096[0] << 24) |
+                     ((uint32_t)TxCan50x7096[1] << 16) |
+                     ((uint32_t)TxCan50x7096[2] << 8) |
+                     TxCan50x7096[3];
 
     /* Extract DLC from TxCan5[4], limit to 15 (0x0F) */
     uint8_t dlc = TxCan50x7096[4];
@@ -1008,7 +1019,7 @@ void can_app_process_txcan2_transmit(void)
     }
     tx_frame.dlc = dlc;
     tx_frame.canfd_frame = 1;
-    tx_frame.bitrate_switch = 1;
+    tx_frame.bitrate_switch = 0;
 
     /* Layout: TxCan5[0-3]=ID, [4]=DLC, [5-29]=data (25 bytes), TxCan6 (30), TxCan7[0-14] (15) */
     memcpy(&tx_frame.data_8[0], &TxCan50x7096[5], 25);
@@ -1019,8 +1030,12 @@ void can_app_process_txcan2_transmit(void)
     if (status == status_success) {
         s_can_led_state[2].tx_active = true;
         s_can_led_state[2].tx_last_tick = s_timer_tick;
+        last_error_status = 0;
     } else {
-        printf("Failed to transmit CAN FD frame on CAN2, status: %d\n", status);
+        if (status != last_error_status) {
+            printf("Failed to transmit CAN FD frame on CAN2, status: %d\n", status);
+            last_error_status = status;
+        }
     }
 }
 
@@ -1197,6 +1212,7 @@ void can_app_process_txcan3_transmit(void)
 {
     mcan_tx_frame_t tx_frame;
     hpm_stat_t status;
+    static hpm_stat_t last_error_status = 0;
 
     if (!s_can3_transmit_initialized) {
         return;
@@ -1214,11 +1230,11 @@ void can_app_process_txcan3_transmit(void)
     extern CHAR TxCan80x70F0[30];
     extern CHAR TxCan90x710E[30];
 
-    /* Extract CAN ID from TxCan7[15-18] */
-    uint32_t can_id = TxCan70x70D2[15] |
-                     ((uint32_t)TxCan70x70D2[16] << 8) |
-                     ((uint32_t)TxCan70x70D2[17] << 16) |
-                     ((uint32_t)TxCan70x70D2[18] << 24);
+    /* Extract CAN ID from TxCan7[15-18] (big-endian format) */
+    uint32_t can_id = ((uint32_t)TxCan70x70D2[15] << 24) |
+                     ((uint32_t)TxCan70x70D2[16] << 16) |
+                     ((uint32_t)TxCan70x70D2[17] << 8) |
+                     TxCan70x70D2[18];
 
     /* Extract DLC from TxCan7[19], limit to 15 (0x0F) */
     uint8_t dlc = TxCan70x70D2[19];
@@ -1236,7 +1252,7 @@ void can_app_process_txcan3_transmit(void)
     }
     tx_frame.dlc = dlc;
     tx_frame.canfd_frame = 1;
-    tx_frame.bitrate_switch = 1;
+    tx_frame.bitrate_switch = 0;
 
     /* Layout: TxCan7[15-18]=ID, [19]=DLC, [20-29]=data (10 bytes), TxCan8 (30), TxCan9 (30) */
     memcpy(&tx_frame.data_8[0], &TxCan70x70D2[20], 10);
@@ -1247,8 +1263,12 @@ void can_app_process_txcan3_transmit(void)
     if (status == status_success) {
         s_can_led_state[3].tx_active = true;
         s_can_led_state[3].tx_last_tick = s_timer_tick;
+        last_error_status = 0;
     } else {
-        printf("Failed to transmit CAN FD frame on CAN3, status: %d\n", status);
+        if (status != last_error_status) {
+            printf("Failed to transmit CAN FD frame on CAN3, status: %d\n", status);
+            last_error_status = status;
+        }
     }
 }
 

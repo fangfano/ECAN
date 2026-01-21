@@ -107,28 +107,28 @@ CAN 发送帧
 
 ### 使用 HPM SDK 项目生成器连接开发板
 
-- 运行 `start_gui.exe`
-
+- 运行 `start_gui.exe`      
 ![alt text](./images/image-6.png)
 
-- 配置运行 GDB 服务
-
+- 配置运行 GDB 服务     
 ![alt text](./images/image-7.png)
 
-- 成功连接后终端将显示如下信息：
-
+- 成功连接后终端将显示如下信息：        
 ![alt text](./images/image-8.png)
 
 ### 使用 SEGGER 烧录程序
 
-- 进入图示路径，双击自动启动 SEGGER Embedded Studio
-
+- 进入图示路径，双击自动启动 SEGGER Embedded Studio     
 ![alt text](./images/image-9.png)
 
-- 执行 Clean → Build 编译工程
-
+- 执行 Clean → Build 编译工程       
 ![alt text](./images/image-10.png)
 
-- 最后启动运行
-
+- 最后启动运行      
 ![alt text](./images/image-11.png)
+
+- 串口正常打印如下信息：        
+![alt text](./images/image-12.png)
+    - 系统各时钟域频率配置信息
+    - 字符绘制系统标识
+    - 程序初始化日志

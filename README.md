@@ -151,19 +151,19 @@ https://www.zhiyuan-robot.com/DOCS/PM/DCU
 
 使用本设备控制电机运行。
 
-- 设备处于ecat从站工作模式
+- 设备处于ecat从站工作模式    
 - can接口连接电机,通道接口识别到对端CAN设备后，保持发送状态（绿灯闪烁）。   
-![alt text](images/motor1.gif)
-- 观察twincat界面，可以观察到接收和发送的CAN帧信息
-![alt text](images/twincat1.gif)
+![alt text](images/motor1.gif)    
+- 观察twincat界面，可以观察到接收和发送的CAN帧信息    
+![alt text](images/twincat1.gif)    
 
 ```
 RxCan显示CAN0持续接收电机的CAN帧信息，电机持续发送ID为11，长度为8的状态数据。
 TxCan显示CAN0通道发送的CAN帧信息，持续发送信息ID为1，长度为8的控制数据。（对应MIT的控制指令）
 ```
 
-- 修改TxCan控制信息，观察电机响应
+- 修改TxCan控制信息，观察电机响应   
 ![alt text](images/twincat2.gif)    
 ![alt text](images/motor2.gif)
 
-- 电机响应符合预期，测试成功
+- 电机响应符合预期，测试成功 

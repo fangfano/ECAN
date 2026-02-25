@@ -54,7 +54,8 @@ KH-EtherCAT-CANFDX4-OP 是一款开源硬件模块，模块基于 HPMicro HPM5E3
 
 ### 成品板卡购买
 
-Coming soon
+[点击查看](https://item.taobao.com/item.htm?id=1021325709078)
+
 
 ### 联系我们
 

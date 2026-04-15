@@ -107,20 +107,20 @@ CAN 发送帧
 
 ### 快速更新
 
-1. 下载并打开 `HPM Manufacturing Tool`。
+1. 下载并打开 `HPM Manufacturing Tool`。  
 ![alt text](./images/image-13.png)
 
-1. 按板卡启动配置要求短接 `B0` 后重新上电。（版本不同短接方式不同，可参考下图）
+1. 按板卡启动配置要求短接 `B0` 后重新上电。（版本不同短接方式不同，可参考下图）  
 ![alt text](./images/image-17.png)
 ![alt text](./images/image-18.png)
 
-1. 软件识别到设备后，会在设备列表中显示对应目标。
+1. 软件识别到设备后，会在设备列表中显示对应目标。  
 ![alt text](./images/image-14.png)
 
-1. 点击“连接”，按照图示路径选择待烧写的固件文件。
+1. 点击“连接”，按照图示路径选择待烧写的固件文件。  
 ![alt text](./images/image-15.png)
 
-1. 确认固件文件无误后，点击“烧写”开始更新，等待工具提示烧写完成。
+1. 确认固件文件无误后，点击“烧写”开始更新，等待工具提示烧写完成。  
 ![alt text](./images/image-16.png)
 
 1. 烧写完成后，断开 `B0` 短接并重新上电，固件升级完成。
@@ -129,27 +129,27 @@ CAN 发送帧
 
 #### 使用 HPM SDK 项目生成器连接开发板
 
-- 运行 `start_gui.exe`
+- 运行 `start_gui.exe`  
 ![alt text](./images/image-6.png)
 
-- 配置运行 GDB 服务
+- 配置运行 GDB 服务  
 ![alt text](./images/image-7.png)
 
-- 成功连接后终端将显示如下信息：
+- 成功连接后终端将显示如下信息：  
 ![alt text](./images/image-8.png)
 
 #### 使用 SEGGER 烧录程序
 
-- 进入图示路径，双击自动启动 SEGGER Embedded Studio
+- 进入图示路径，双击自动启动 SEGGER Embedded Studio  
 ![alt text](./images/image-9.png)
 
-- 执行 Clean → Build 编译工程
+- 执行 Clean → Build 编译工程  
 ![alt text](./images/image-10.png)
 
-- 最后启动运行
+- 最后启动运行  
 ![alt text](./images/image-11.png)
 
-- 串口正常打印如下信息：
+- 串口正常打印如下信息：  
 ![alt text](./images/image-12.png)
   - 系统各时钟域频率配置信息
   - 字符绘制系统标识

@@ -76,6 +76,17 @@ void can_app_trigger_can3_transmit(void);
  */
 void can_app_process_bus(uint32_t ch);
 
+/**
+ * @brief TX Completed interrupt handler entry point.
+ *
+ * Called from the MCANx_IRQHandler in hpm_can.c. Drains pending frames
+ * from the pipeline by feeding them into the TX FIFO until it is full
+ * or all frames have been sent.
+ *
+ * @param ch CAN channel index (0..3)
+ */
+void can_app_on_tx_complete(uint32_t ch);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1230,7 +1230,8 @@ build_tmp/CMakeFiles/hpm_sdk_lib.dir/__/port/hpm_can.c.obj: ../port/hpm_can.c \
   ../hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/hpm_soc_ip_feature.h \
   ../hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/hpm_trgmmux_src.h \
   ../hpm_sdk_localized_for_hpm5e00evk/drivers/inc/hpm_gptmr_drv.h \
-  ../hpm_sdk_localized_for_hpm5e00evk/components/debug_console/hpm_debug_console.h
+  ../hpm_sdk_localized_for_hpm5e00evk/components/debug_console/hpm_debug_console.h \
+  ../hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/hpm_interrupt.h
 
 build_tmp/CMakeFiles/hpm_sdk_lib.dir/__/port/hpm_ecat_e2p_emulation.c.obj: ../port/hpm_ecat_e2p_emulation.c \
   ../port/hpm_ecat_e2p_emulation.h \

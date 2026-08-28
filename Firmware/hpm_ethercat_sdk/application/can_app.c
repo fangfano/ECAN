@@ -79,6 +79,17 @@ static bool s_can_initialized[CAN_BUS_COUNT] = {false};
 /* 记录每个通道初始化时是否启用了 CANFD（用于 TX 路径对 classic CAN 做 8 字节截断） */
 static bool s_canfd_enabled[CAN_BUS_COUNT] = {false};
 
+/* ===== TX 流水线（中断驱动非阻塞发送）===== */
+
+/* 单通道 TX 流水线状态 */
+typedef struct {
+    volatile bool  active;       /* true 表示管道正在工作，等待 TC 中断 */
+    volatile bool  pending;      /* true 表示还有帧等待填入 TX FIFO */
+    volatile uint8_t next_slot;  /* 下一个待填入的 slot 索引 (0..SLOTS_PER_BUS-1) */
+} tx_pipeline_t;
+
+static tx_pipeline_t s_tx_pipeline[CAN_BUS_COUNT] = {0};
+
 /* PDO slot pointer tables. Each entry points to the 16-byte RxCan/TxCan object. */
 static CHAR *const s_rx_pdo_ptrs[CAN_BUS_COUNT][SLOTS_PER_BUS] = {
     { RxCanGroup110x6000, RxCanGroup120x6010, RxCanGroup130x6020, RxCanGroup140x6030,
@@ -258,6 +269,10 @@ static void led_blink_timer_callback(void)
     }
 }
 
+/* === 流水线辅助函数（声明在前，实现在 can_app_process_bus 之后）=== */
+static bool tx_pipeline_feed_one(uint32_t ch, const CHAR *tx_buf);
+void can_app_on_tx_complete(uint32_t ch);
+
 /***********************************************************************************************************************
  *
  *  Public Functions
@@ -406,66 +421,44 @@ void can_app_process_bus(uint32_t ch)
         return;
     }
 
-    /* === TX: trigger-driven scan of non-zero-ID slots === */
+    /* === TX: trigger-driven pipeline fill (non-blocking) === */
     if (s_bus_tx_pending[ch]) {
         s_bus_tx_pending[ch] = false;
+
+        /* 取消上一轮留下的管道（若有），并清中断标志防止误触发 */
+        if (s_tx_pipeline[ch].active) {
+            hpm_can_disable_all_irq(ch);
+        }
+        hpm_can_clear_tx_completed_flag(ch);
+
+        /* 重置流水线指针，确保本轮从 slot 0 开始 */
+        s_tx_pipeline[ch].next_slot = 0;
 
         CHAR tx_buf[PDO_BUFFER_SIZE];
         can_app_read_tx_pdo(ch, tx_buf);
 
-        for (uint8_t slot = 0; slot < SLOTS_PER_BUS; slot++) {
-            uint32_t off = slot * MOTOR_FRAME_SIZE;
-            uint16_t can_id = ((uint16_t)(uint8_t)tx_buf[off + 0] << 8) |
-                              ((uint16_t)(uint8_t)tx_buf[off + 1]);
-
-            if (can_id == 0) {
-                /* Master didn't populate this slot. Skip TX but PRESERVE the
-                 * previously learned CAN ID so RX routing for that motor keeps
-                 * working across cycles where the master writes 0 here. */
-                continue;
-            }
-
-            uint8_t frame_type = (uint8_t)tx_buf[off + FRAME_TYPE_OFFSET];
-            uint8_t data_len   = (uint8_t)tx_buf[off + FRAME_LEN_OFFSET];
-
-            if (data_len > FRAME_DATA_MAX_LEN) {
-                data_len = FRAME_DATA_MAX_LEN;
-            }
-            /* Classic CAN 通道（未启用 CANFD）单帧最多 8 字节数据，
-             * 超过会被硬件拒绝；此处截断到 8 字节以保证发送成功。 */
-            if (!s_canfd_enabled[ch] && data_len > 8) {
-                data_len = 8;
-            }
-
-            mcan_tx_frame_t tx_frame;
-            memset(&tx_frame, 0, sizeof(tx_frame));
-            tx_frame.std_id = can_id & 0x7FF;
-            tx_frame.use_ext_id = 0;
-            tx_frame.dlc = can_byte_count_to_dlc(data_len);
-
-            if (frame_type == MOTOR_FRAME_TYPE_CAN) {
-                tx_frame.canfd_frame = 0;
-                tx_frame.bitrate_switch = 0;
-            } else if (frame_type == MOTOR_FRAME_TYPE_CANFD) {
-                tx_frame.canfd_frame = 1;
-                tx_frame.bitrate_switch = 0;
+        /* 预填 TX FIFO：尽可能多地塞入帧，不阻塞 */
+        uint8_t fed = 0;
+        while (fed < SLOTS_PER_BUS) {
+            if (tx_pipeline_feed_one(ch, tx_buf)) {
+                fed++;
             } else {
-                tx_frame.canfd_frame = 1;
-                tx_frame.bitrate_switch = 1;
+                /* TX FIFO 已满，后续帧留给 TC 中断继续填 */
+                break;
             }
-
-            if (data_len > 0) {
-                memcpy(tx_frame.data_8, &tx_buf[off + FRAME_DATA_OFFSET], data_len);
-            }
-            hpm_can_transmit(ch, &tx_frame);
-
-            /* Learn slot -> CAN ID for RX reverse-routing. */
-            s_slot_state[ch][slot].active = true;
-            s_slot_state[ch][slot].last_can_id = can_id;
-
-            s_can_led_state[ch].tx_active = true;
-            s_can_led_state[ch].tx_last_tick = s_timer_tick;
         }
+
+        /* 初始化流水线状态 */
+        s_tx_pipeline[ch].active  = (fed < SLOTS_PER_BUS);
+        s_tx_pipeline[ch].pending = s_tx_pipeline[ch].active;
+
+        /* 若还有帧未入队，开 TC 中断由硬件驱动后续填充 */
+        if (s_tx_pipeline[ch].pending) {
+            hpm_can_enable_tx_completed_irq(ch, true);
+        }
+
+        s_can_led_state[ch].tx_active = true;
+        s_can_led_state[ch].tx_last_tick = s_timer_tick;
     }
 
     /* === RX: drain FIFO, route each frame by learned CAN ID === */
@@ -514,4 +507,137 @@ void can_app_process_bus(uint32_t ch)
         s_can_led_state[ch].rx_active = true;
         s_can_led_state[ch].rx_last_tick = s_timer_tick;
     }
+}
+
+/***********************************************************************************************************************
+ *  TX Pipeline: non-blocking feed + ISR-driven continuation
+ **********************************************************************************************************************/
+
+/**
+ * @brief Build one CAN frame from the TX PDO buffer and write it to the TX FIFO.
+ *
+ * Skips slots whose CAN ID is 0 (preserves learned routing).
+ * Returns true if the frame was successfully written to the FIFO.
+ * Returns false if the TX FIFO is full.
+ */
+static bool tx_pipeline_feed_one(uint32_t ch, const CHAR *tx_buf)
+{
+    uint8_t slot = s_tx_pipeline[ch].next_slot;
+    if (slot >= SLOTS_PER_BUS) {
+        return false;
+    }
+
+    uint32_t off = slot * MOTOR_FRAME_SIZE;
+    uint16_t can_id = ((uint16_t)(uint8_t)tx_buf[off + 0] << 8) |
+                      ((uint16_t)(uint8_t)tx_buf[off + 1]);
+
+    if (can_id == 0) {
+        /* Master didn't populate this slot. Skip TX but PRESERVE the
+         * previously learned CAN ID so RX routing for that motor keeps
+         * working across cycles where the master writes 0 here. */
+        s_tx_pipeline[ch].next_slot = slot + 1;
+        return tx_pipeline_feed_one(ch, tx_buf);  /* try next slot */
+    }
+
+    uint8_t frame_type = (uint8_t)tx_buf[off + FRAME_TYPE_OFFSET];
+    uint8_t data_len   = (uint8_t)tx_buf[off + FRAME_LEN_OFFSET];
+
+    if (data_len > FRAME_DATA_MAX_LEN) {
+        data_len = FRAME_DATA_MAX_LEN;
+    }
+    /* Classic CAN 通道（未启用 CANFD）单帧最多 8 字节数据，
+     * 超过会被硬件拒绝；此处截断到 8 字节以保证发送成功。 */
+    if (!s_canfd_enabled[ch] && data_len > 8) {
+        data_len = 8;
+    }
+
+    mcan_tx_frame_t tx_frame;
+    memset(&tx_frame, 0, sizeof(tx_frame));
+    tx_frame.std_id = can_id & 0x7FF;
+    tx_frame.use_ext_id = 0;
+    tx_frame.dlc = can_byte_count_to_dlc(data_len);
+
+    if (frame_type == MOTOR_FRAME_TYPE_CAN) {
+        tx_frame.canfd_frame = 0;
+        tx_frame.bitrate_switch = 0;
+    } else if (frame_type == MOTOR_FRAME_TYPE_CANFD) {
+        tx_frame.canfd_frame = 1;
+        tx_frame.bitrate_switch = 0;
+    } else {
+        tx_frame.canfd_frame = 1;
+        tx_frame.bitrate_switch = 1;
+    }
+
+    if (data_len > 0) {
+        memcpy(tx_frame.data_8, &tx_buf[off + FRAME_DATA_OFFSET], data_len);
+    }
+
+    /* 非阻塞写入 TX FIFO，满则返回 false */
+    if (hpm_can_transmit_nonblocking(ch, &tx_frame) != status_success) {
+        return false;
+    }
+
+    /* Learn slot -> CAN ID for RX reverse-routing. */
+    s_slot_state[ch][slot].active = true;
+    s_slot_state[ch][slot].last_can_id = can_id;
+
+    // 继续发下一个帧
+    s_tx_pipeline[ch].next_slot = slot + 1;
+    return true;
+}
+
+/**
+ * @brief TX Completed interrupt handler called from hpm_can.c ISRs.
+ *
+ * Each time a frame transmission finishes, refill one slot from the pipeline.
+ * When all 7 frames are sent and the FIFO drains, disable the TC interrupt.
+ */
+void can_app_on_tx_complete(uint32_t ch)
+{
+    if (ch >= CAN_BUS_COUNT || !s_tx_pipeline[ch].active) { // 保证管道被激活，需要发送数据
+        return;
+    }
+
+    /* Clear TC flag first to avoid re-triggering while we work */
+    hpm_can_clear_tx_completed_flag(ch);
+
+    CHAR tx_buf[PDO_BUFFER_SIZE];
+    can_app_read_tx_pdo(ch, tx_buf);
+
+    /* 每次中断填入一帧，直到 FIFO 满或所有 slot 处理完 */
+    bool fed_any       = false;
+    bool all_slots_done = false;
+    while (s_tx_pipeline[ch].pending) {
+        if (s_tx_pipeline[ch].next_slot >= SLOTS_PER_BUS) {
+            /* 所有 slot 已处理完，退出循环去检查 FIFO 状态 */
+            all_slots_done = true;
+            break;
+        }
+        if (!tx_pipeline_feed_one(ch, tx_buf)) {
+            break;  /* FIFO full, wait for next TX */
+        }
+        fed_any = true;
+    }
+
+    if (!fed_any && !all_slots_done) {
+        /* FIFO 满了，等下一帧发送完成后继续填 */
+        return;
+    }
+
+    /* 检查 TX FIFO 是否已空：
+     * - all_slots_done && FIFO 空 → 全部发完，关中断
+     * - all_slots_done && FIFO 非空 → 还有帧在途，保持 active 等后续 TC
+     * - !all_slots_done && fed_any  → 已填一些帧，FIFO 非空，保持 active */
+    MCAN_Type *base = hpm_can_get_base(ch);
+    /* 检查 TX FIFO 填充级别（TFFL）是否为 0，而非"未满"标志（TFQF）。
+     * TFQF=0 仅表示 FIFO 不满，不代表 FIFO 已空。 */
+    bool txfifo_empty = (base != NULL && MCAN_TXFQS_TFFL_GET(base->TXFQS) == 0);
+
+    if (all_slots_done && txfifo_empty) {
+        /* 所有帧均已发送完毕，关闭 TC 中断 */
+        s_tx_pipeline[ch].active  = false;
+        s_tx_pipeline[ch].pending = false;
+        hpm_can_disable_all_irq(ch);
+    }
+    /* else: 还有帧在途或后续 slot 待填，保持 active/pending=true 等下次 TC */
 }

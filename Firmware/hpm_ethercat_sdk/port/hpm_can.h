@@ -81,6 +81,30 @@ MCAN_Type *hpm_can_get_base(uint32_t channel);
  */
 uint32_t hpm_can_get_channel_count(void);
 
+/**
+ * @brief Non-blocking transmit: write frame into TX FIFO if space is available.
+ *        Returns status_fail when the TX FIFO is full.
+ */
+hpm_stat_t hpm_can_transmit_nonblocking(uint32_t channel, mcan_tx_frame_t *tx_frame);
+
+/**
+ * @brief Enable or disable the TX Completed (TC) interrupt for a channel.
+ *        The MCAN global IRQ is enabled on first call and stays enabled until
+ *        hpm_can_disable_all_irq() is called.
+ */
+void hpm_can_enable_tx_completed_irq(uint32_t channel, bool enable);
+
+/**
+ * @brief Fully disable TX Completed interrupt and the MCAN global IRQ.
+ */
+void hpm_can_disable_all_irq(uint32_t channel);
+
+/**
+ * @brief Clear the TC interrupt flag before enabling the TC interrupt to
+ *        avoid an immediate spurious interrupt.
+ */
+void hpm_can_clear_tx_completed_flag(uint32_t channel);
+
 #ifdef __cplusplus
 }
 #endif

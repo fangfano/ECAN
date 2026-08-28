@@ -39,5 +39,8 @@
 #define ECAT_RESET_ESC_PERIPHERAL  0    /* ESC reset request will reset ethercat slave controller only, not suggest */
 #define ECAT_RESET_ESC_WITH_MCU    1    /* ESC reset request will reset ethercat slave controller and mcu */
 
+/* ecat.c provides the project's main(); disable SSC default main in digital_io.c */
+#undef USE_DEFAULT_MAIN
+#define USE_DEFAULT_MAIN           0
 
 #endif /* ECAT_CONFIG_H */

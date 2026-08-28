@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iarUserArgVars>
+<group name="HPM_SDK" active="true">
+<variable>
+<name>HPM_SDK_BASE</name>
+<value>/home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/hpm_sdk_localized_for_hpm5e00evk</value>
+</variable>
+</group>
+</iarUserArgVars>

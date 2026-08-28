@@ -1,6 +1,7 @@
 /*
 * This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
 * The corresponding license agreement applies. This hint shall not be removed.
+* https://www.beckhoff.com/media/downloads/slave-stack-code/ethercat_ssc_license.pdf
 */
 
 /**
@@ -14,8 +15,20 @@
 \brief Implementation
 This file contains the EtherCAT State Machine.
 
-\version 5.12
+\version 5.13
 
+<br>Changes to version V5.12:<br>
+V5.13 BOOT1: support Init-to-Init transition in bootloader application<br>
+V5.13 CIA402 3: change define "CIA402_DEVICE" to "CiA402_SAMPLE_APPLICATION"<br>
+V5.13 CIA402 4: decouple CIA402 state machine and application from ESM (according ETG.6010, clause 4)<br>
+V5.13 ECAT1: handle Sync mapped to AL Event<br>
+V5.13 ECAT2: explicit device ID handling, the ID value shall only be latched on the rising edge of 0x120.5<br>
+V5.13 ECAT3: reset local Error flag in case of two consecutive pending state response and the the first failes<br>
+V5.13 ESM1: local error handling update, ECAT_StateChange triggers only transitions from Op->Any or reject/accept a pending transition<br>
+V5.13 ESM2: support ErrorSafeOP to OP transition<br>
+V5.13 ESM3: Safe-to-OP transition in DC mode, ack OP state if no error was detected<br>
+V5.13 ESM4: implement disable sync error reaction 0x10F1.2 is set to 0<br>
+V5.13 MBX1: change mbx_read flag handling to SM1 buffer state handling (required in case of a mbx read frame with an invalid CRC, the read flag would be set but the SM bufer is still locked)<br>
 <br>Changes to version V5.11:<br>
 V5.12 BOOT1: add a bootloader sample application (only the ESM and FoE is supported)<br>
 V5.12 ECAT1: update SM Parameter measurement (based on the system time), enhancement for input only devices and no mailbox support, use only 16Bit pointer in process data length caluclation<br>
@@ -204,6 +217,7 @@ V4.00 ECAT 7: The return values for the AL-StatusCode were changed to UINT16
 
 
 
+/*ECATCHANGE_START(V5.13) CIA402 3*/
 #include "digital_io.h"
 
 /*--------------------------------------------------------------------------------------
@@ -230,12 +244,15 @@ TSYNCMAN		SyncManInfo;
 
 //indicates if the EEPORM was loaded correct
 BOOL EepromLoaded = FALSE;
+
+
 /*-----------------------------------------------------------------------------------------
 ------
 ------    local functions
 ------
 -----------------------------------------------------------------------------------------*/
-
+/*ECATCHANGE_START(V5.13) ECAT1*/
+/*ECATCHANGE_END(V5.13) ECAT1*/
 void ResetALEventMask(UINT16 intMask);
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -675,6 +692,7 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
 UINT16 StartInputHandler(void)
 {
     TSYNCMAN ESCMEM * pSyncMan;
+
      UINT32        dcControl;
 
     UINT16     wdiv = 0;
@@ -749,7 +767,7 @@ UINT16 StartInputHandler(void)
     }
 
     /* 
-        --- Check configured synchronisation ---
+        --- Check configured synchronization ---
     */
 
     /* Get the DC Control/Activation register value*/
@@ -803,7 +821,6 @@ UINT16 StartInputHandler(void)
         }
 
         {
-/*ECATCHANGE_START(V5.12) ECAT1*/
             UINT32 curMinCycleTime = MIN_PD_CYCLE_TIME;
             curMinCycleTime = sSyncManOutPar.u32MinCycleTime;
 
@@ -812,7 +829,6 @@ UINT16 StartInputHandler(void)
             {
                     return ALSTATUSCODE_DCSYNC0CYCLETIME;
             }
-/*ECATCHANGE_END(V5.12) ECAT1*/
         }
 
 
@@ -948,7 +964,6 @@ UINT16 StartInputHandler(void)
     /* Update Cycle time entries if DC Sync Mode enabled */
     if(SyncType0x1C32 == SYNCTYPE_DCSYNC1)
     {
-/*ECATCHANGE_START(V5.12) ECAT1*/
         sSyncManOutPar.u32Sync0CycleTime = (UINT32)cycleTimeSync0;
         sSyncManOutPar.u32CycleTime = (UINT32)cycleTimeSync0;
 
@@ -962,7 +977,6 @@ UINT16 StartInputHandler(void)
 
         sSyncManInPar.u32Sync0CycleTime = (UINT32)cycleTimeSync0;
         sSyncManInPar.u32CycleTime = (UINT32)cycleTimeSync0;
-/*ECATCHANGE_END(V5.12) ECAT1*/
     }
 
     /* Set global flags based on Sync Type */
@@ -1009,6 +1023,8 @@ UINT16 StartInputHandler(void)
             }
         }
 
+
+
     sSyncManOutPar.u16SyncType = SyncType0x1C32;
     sSyncManInPar.u16SyncType = SyncType0x1C33;
 
@@ -1021,9 +1037,9 @@ UINT16 StartInputHandler(void)
 
     if(bSubordinatedCycles == TRUE)
     {
-/*ECATCHANGE_START(V5.12) ECAT4*/
+        
         UINT32 cycleTimeSync1 = (shiftTimeSync1 + cycleTimeSync0);
-/*ECATCHANGE_END(V5.12) ECAT4*/
+
 
         /* get the number of Sync0 event within on SM cycle */
         if(shiftTimeSync1 >= cycleTimeSync0)
@@ -1080,7 +1096,7 @@ UINT16 StartInputHandler(void)
     UINT32 tmpValue = 0;
     HW_EscReadDWord(tmpValue, ESC_PD_WD_TIME);
 
-    wd = (UINT16)(SWAPDWORD(tmpValue & 0x0000FFFF));
+    wd = (UINT16)(SWAPDWORD(tmpValue) & 0x0000FFFF);
     }
 
     if (nPdOutputSize > 0 &&  wd != 0 )
@@ -1100,9 +1116,9 @@ UINT16 StartInputHandler(void)
 
 
             d *= wd;
-            /* store watchdog in ms in variable u16WdValue */
+            /* store watchdog in ms in variable EcatWdValue */
             /* watchdog value has to be rounded up */
-            d += 24999;
+            d = (INT32)(d + 24999);
             d /= 25000;
             EcatWdValue = (UINT16) d;
         }
@@ -1143,7 +1159,22 @@ UINT16 StartInputHandler(void)
     bSmSyncSequenceValid = FALSE;
     i16WaitForPllRunningTimeout = 0;
 
-/*ECATCHANGE_START(V5.12) ECAT5*/
+/*ECATCHANGE_START(V5.13) ECAT1*/
+    /*Get Sync mapped to AL Event indication*/
+    {
+        UINT32 u32TmpVar = 0;
+        HW_EscReadDWord(u32TmpVar, ESC_PDI_CONFIGURATION);
+        if ((u32TmpVar & ESC_SYNC0_MAPPED_TO_ALEVENT) > 0)
+        {
+            u16ALEventMask |= SYNC0_EVENT;
+        }
+
+        if ((u32TmpVar & ESC_SYNC1_MAPPED_TO_ALEVENT) > 0)
+        {
+            u16ALEventMask |= SYNC1_EVENT;
+        }
+    }
+/*ECATCHANGE_END(V5.13) ECAT1*/
     sSyncManInPar.u16SmEventMissedCounter = 0;
     sSyncManInPar.u16CycleExceededCounter = 0;
     sSyncManInPar.u8SyncError = 0;
@@ -1152,7 +1183,6 @@ UINT16 StartInputHandler(void)
     sSyncManOutPar.u16SmEventMissedCounter = 0;
     sSyncManOutPar.u16CycleExceededCounter = 0;
     sSyncManOutPar.u8SyncError = 0;
-/*ECATCHANGE_END(V5.12) ECAT5*/
 
     /* calculate the Sync0/Sync1 watchdog timeouts */
     if ( (dcControl & ESC_DC_SYNC0_ACTIVE_MASK) != 0 )
@@ -1189,9 +1219,7 @@ UINT16 StartInputHandler(void)
         else
         {
                 /* Sync1 cycle is larger than Sync0 (e.g. subordinated Sync0 cycles) */
-/*ECATCHANGE_START(V5.12) ECAT4*/
                 UINT32 Sync1Cycle = (shiftTimeSync1  + cycleTimeSync0 )/100000;
-/*ECATCHANGE_END(V5.12) ECAT4*/
                 if(Sync1Cycle < 5)
                 {
                     /*Sync0 cycle less than 500us*/
@@ -1199,9 +1227,7 @@ UINT16 StartInputHandler(void)
                 }
                 else
                 {
-                    /*ECATCHANGE_START(V5.12)*/
                     Sync1WdValue = (UINT16)((Sync1Cycle*2)/10);
-                    /*ECATCHANGE_END(V5.12)*/
                 }
 
                 /* add one Sync0 cycle because the Sync1 cycle starts on the next Sync0 after the Sync1 signal */
@@ -1242,7 +1268,9 @@ UINT16 StartOutputHandler(void)
        required to support also masters which starts to send process data after the SO transition was triggered
        (if the master don't send process data within "SAFEOP2OPTIMEOUT" the transition is rejected)*/
     UINT16 result = NOERROR_INWORK;
-    if(bLocalErrorFlag)
+    /*ECATCHANGE_START(V5.13) ESM1*/
+    if(STATE_VALID(u8LocalErrorState))
+/*ECATCHANGE_END(V5.13) ESM1*/
     {
         /*Local error still exists => skip state request to OP and response with "u16LocalErrorCode"*/
         return u16LocalErrorCode;
@@ -1259,7 +1287,6 @@ UINT16 StartOutputHandler(void)
     }
 
 
-/*ECATCHANGE_START(V5.12) ECAT5*/
 
     sSyncManOutPar.u16SmEventMissedCounter = 0;
     sSyncManOutPar.u8SyncError = 0;
@@ -1268,7 +1295,6 @@ UINT16 StartOutputHandler(void)
     sSyncManInPar.u16SmEventMissedCounter = 0;
     sSyncManInPar.u8SyncError = 0;
 
-/*ECATCHANGE_END(V5.12) ECAT5*/
 
     return result;
 }
@@ -1309,6 +1335,8 @@ void StopInputHandler(void)
     }
 
     /* reset the events in the AL Event mask register (0x204) */
+/*ECATCHANGE_START(V5.13) ECAT1*/
+/*ECATCHANGE_END(V5.13) ECAT1*/
     {
         UINT16 ResetMask = SYNC0_EVENT | SYNC1_EVENT;
         ResetMask |= PROCESS_OUTPUT_EVENT;
@@ -1334,7 +1362,6 @@ void StopInputHandler(void)
     LatchInputSync0Value = 0;
     LatchInputSync0Counter = 0;
 
-    /*ECATCHANGE_START(V5.12) ECAT5*/
 
     sSyncManOutPar.u16SmEventMissedCounter = 0;
     sSyncManOutPar.u16CycleExceededCounter = 0;
@@ -1344,7 +1371,6 @@ void StopInputHandler(void)
     sSyncManInPar.u16SmEventMissedCounter = 0;
     sSyncManInPar.u16CycleExceededCounter = 0;
     sSyncManInPar.u8SyncError = 0;
-/*ECATCHANGE_END(V5.12) ECAT5*/
 
     i16WaitForPllRunningTimeout = 0;
 
@@ -1385,16 +1411,6 @@ void SetALStatus(UINT8 alStatus, UINT16 alStatusCode)
         nAlStatus = alStatus;
     }
 
-    /*Handle Explicit Device ID is requested*/
-    if(bExplicitDevIdRequested && !(nAlStatus & STATE_CHANGE) && alStatusCode == 0 && ((nAlStatus & STATE_MASK) != STATE_BOOT))
-    {
-        Value = APPL_GetDeviceID();
-        nAlStatus |= STATE_DEVID;
-    }
-    else
-    {
-        nAlStatus &= ~STATE_DEVID;
-    }
 
     if (alStatusCode != 0xFFFF)
     {
@@ -1418,9 +1434,9 @@ void SetALStatus(UINT8 alStatus, UINT16 alStatusCode)
     else if((alStatusCode == ALSTATUSCODE_NOSYNCERROR) ||
         (alStatusCode == ALSTATUSCODE_SYNCERROR) ||
         (alStatusCode == ALSTATUSCODE_DCPLLSYNCERROR)
-/*ECATCHANGE_START(V5.12) ECAT7*/
-        || (bLocalErrorFlag == TRUE))
-/*ECATCHANGE_END(V5.12) ECAT7*/
+/*ECATCHANGE_START(V5.13) ESM1*/
+        || (u8LocalErrorState > 0))
+/*ECATCHANGE_END(V5.13) ESM1*/
     {
         u8EcatErrorLed = LED_SINGLEFLASH;
     }
@@ -1467,7 +1483,7 @@ void SetALStatus(UINT8 alStatus, UINT16 alStatusCode)
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
  \param    alControl        requested new state
- \param alStatusCode    requested status code
+ \param    alStatusCode     requested status code
 
  \brief    This function handles the EtherCAT State Machine. It is called
             * in case of an AL Control event (Bit 0 of AL-Event (Reg 0x220),
@@ -1514,6 +1530,8 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
     {
         nAlStatus &= STATE_MASK;
     }
+
+    
 
     /* generate a variable for the state transition
       (Bit 0-3: new state (AL Control), Bit 4-7: old state (AL Status) */
@@ -1635,6 +1653,8 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
 
                 if(result == 0)
                 {
+/*ECATCHANGE_START(V5.13) ECAT1*/
+/*ECATCHANGE_END(V5.13) ECAT1*/
                     /* initialize the AL Event Mask register (0x204) */
                     SetALEventMask( u16ALEventMask );
 
@@ -1657,6 +1677,22 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             break;
 
         case SAFEOP_2_OP:
+/*ECATCHANGE_START(V5.13) ESM2*/
+            /*enable SM if error was acknowledged*/
+            if (bErrAck)
+            {
+                if (nPdOutputSize > 0)
+                {
+                    EnableSyncManChannel(PROCESS_DATA_OUT);
+                }
+                else
+                    if (nPdInputSize > 0)
+                    {
+                        EnableSyncManChannel(PROCESS_DATA_IN);
+                    }
+            }
+            /*ECATCHANGE_END(V5.13) ESM2*/
+
             /* start the output handler (function is defined above) */
             result = StartOutputHandler();
             if(result == 0)
@@ -1754,7 +1790,6 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
 
             BackToInitTransition();
             break;
-
         case INIT_2_INIT:
             BackToInitTransition();
         case PREOP_2_PREOP:
@@ -1765,7 +1800,6 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
                 APPL_AckErrorInd(stateTrans);
             }
 
-/*ECATCHANGE_START(V5.12) ESM2*/
 
                 /*no local error flag is currently active, enable SM*/
                 if ( nAlStatus & (STATE_SAFEOP | STATE_OP))
@@ -1780,7 +1814,6 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
                         EnableSyncManChannel(PROCESS_DATA_IN);
                     }
                 }
-/*ECATCHANGE_END(V5.12) ESM2*/
             
             result = NOERROR_NOSTATECHANGE;
             break;
@@ -1862,9 +1895,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
                 EsmTimeoutCounter = 200; //Set default timeout value to 200ms
                 break;
         }
-        /*ECATCHANGE_START(V5.12) ESM3*/
         EsmTimeoutCounter -= (INT16) (EsmTimeoutCounter / 10); //subtract 10% from the timeout to react before the master runs into a timeout.
-        /*ECATCHANGE_END(V5.12) ESM3*/
 
     }
     else if ( alControl != (nAlStatus & STATE_MASK) )
@@ -1935,6 +1966,9 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
            if the the error bit was acknowledged */
         SetALStatus(nAlStatus, 0);
     }
+    /*ECATCHANGE_START(V5.13) CIA402 4*/
+    /*decouple CIA402 state machine from ESM*/
+    /*ECATCHANGE_END(V5.13) CIA402 4*/
 
 }
 
@@ -1969,7 +2003,9 @@ void AL_ControlRes(void)
                         }
 
                     MBX_StopMailboxHandler();
-                    if(bLocalErrorFlag)
+                    /*ECATCHANGE_START(V5.13) ESM1*/
+                    if((u8LocalErrorState & STATE_MASK) == STATE_INIT)
+                        /*ECATCHANGE_END(V5.13) ESM1*/
                     {
                         /*Set application specified error*/
                         StatusCode = u16LocalErrorCode;
@@ -1989,7 +2025,9 @@ void AL_ControlRes(void)
 
                     StopInputHandler();
                     
-                    if(bLocalErrorFlag)
+                    /*ECATCHANGE_START(V5.13) ESM1*/
+                    if ((u8LocalErrorState & STATE_MASK) == STATE_PREOP)
+                        /*ECATCHANGE_END(V5.13) ESM1*/
                     {
                         /*Set application specified error*/
                         StatusCode = u16LocalErrorCode;
@@ -2014,11 +2052,21 @@ void AL_ControlRes(void)
                             /*no process data received*/
                             StatusCode = ALSTATUSCODE_SMWATCHDOG;
                         }
-                        else
+/*ECATCHANGE_START(V5.13) ESM3*/
+                        else if (!bSmSyncSequenceValid)
                         {
                             /*SM/Sync Sequence is not valid*/
                             StatusCode = ALSTATUSCODE_SYNCERROR;
                         }
+                        else
+                        {
+                            /*Set valid state transition even if timeout expired*/
+                            Status = STATE_OP;
+                            StatusCode = 0;
+                            /* Slave is OPERATIONAL */
+                            bEcatOutputUpdateRunning = TRUE;
+                        }
+/*ECATCHANGE_END(V5.13) ESM3*/
                     }
                     else
                     {
@@ -2028,11 +2076,21 @@ void AL_ControlRes(void)
                         }
                         else
                         {
-                            /*Set valid state transition even if timeout expired*/
-                            Status = STATE_OP;
-                            StatusCode = 0;
-                            /* Slave is OPERATIONAL */
-                            bEcatOutputUpdateRunning = TRUE;
+                            /*ECATCHANGE_START(V5.13) ESM1*/
+                            if ((u8LocalErrorState & STATE_MASK) == STATE_SAFEOP)
+                            {
+                                /*Set application specified error*/
+                                StatusCode = u16LocalErrorCode;
+                            }
+                            else
+                                /*ECATCHANGE_END(V5.13) ESM1*/
+                            {
+                                /*Set valid state transition even if timeout expired*/
+                                Status = STATE_OP;
+                                StatusCode = 0;
+                                /* Slave is OPERATIONAL */
+                                bEcatOutputUpdateRunning = TRUE;
+                            }
                         }
                     }
 
@@ -2118,9 +2176,7 @@ void AL_ControlRes(void)
                                 i16WaitForPllRunningTimeout = 0;
                                 i16WaitForPllRunningCnt = 0;
 
-/*ECATCHANGE_START(V5.12) ESM4*/
                                 bApplEsmPending = FALSE;
-/*ECATCHANGE_END(V5.12) ESM4*/
                                 result = APPL_StartOutputHandler();
 
                                 if(result == 0)
@@ -2143,9 +2199,7 @@ void AL_ControlRes(void)
                         {
                             if(nPdOutputSize == 0 || bEcatFirstOutputsReceived)
                             {
-/*ECATCHANGE_START(V5.12) ESM4*/
                                 bApplEsmPending = FALSE;  
-/*ECATCHANGE_END(V5.12) ESM4*/
                                 result = APPL_StartOutputHandler();
 
                                 if(result == 0)
@@ -2194,9 +2248,7 @@ void AL_ControlRes(void)
 *////////////////////////////////////////////////////////////////////////////////////////
 void DC_CheckWatchdog(void)
 {
-/*ECATCHANGE_START(V5.12) ECAT5*/
     DISABLE_ESC_INT();
-/*ECATCHANGE_END(V5.12) ECAT5*/
 
     if(bDcSyncActive && bEcatInputUpdateRunning)
     {
@@ -2234,7 +2286,9 @@ void DC_CheckWatchdog(void)
         }
         if(bDcRunning)
         {
-           if(sSyncManOutPar.u16SmEventMissedCounter < sErrorSettings.u16SyncErrorCounterLimit)
+/*ECATCHANGE_START(V5.13) ESM4*/
+           if((sErrorSettings.u16SyncErrorCounterLimit == 0) || (sSyncManOutPar.u16SmEventMissedCounter < sErrorSettings.u16SyncErrorCounterLimit))
+/*ECATCHANGE_END(V5.13) ESM4*/
             {
                 bSmSyncSequenceValid = TRUE;
 
@@ -2260,9 +2314,7 @@ void DC_CheckWatchdog(void)
            bSmSyncSequenceValid = FALSE;
         }
     }
-    /*ECATCHANGE_START(V5.12) ECAT5*/
     ENABLE_ESC_INT();
-    /*ECATCHANGE_END(V5.12) ECAT5*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -2273,7 +2325,7 @@ void DC_CheckWatchdog(void)
 *////////////////////////////////////////////////////////////////////////////////////////
 void CheckIfEcatError(void)
 {
-   /*if the watchdog is enabled check the the process data watchdog in the ESC
+   /*if the watchdog is enabled check the process data watchdog in the ESC
    and set the AL status code 0x1B if the watchdog expired*/
    if (EcatWdValue != 0)
    {
@@ -2323,7 +2375,7 @@ void CheckIfEcatError(void)
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
- \param    alStatus: requested state
+ \param    alStatus: requested state (ignored if the "alStatusCode" is 0)
  \param    alStatusCode: value for the AL-Status register
  
  \brief    This function changes the state of the EtherCAT slave if the requested state
@@ -2333,6 +2385,20 @@ void CheckIfEcatError(void)
 void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
 {
     UINT8 Status = alStatus;
+
+    /*ECATCHANGE_START(V5.13) ESM1*/
+    /*return in case of invalid parameters*/
+    if (alStatusCode != 0 && !STATE_VALID(alStatus))
+    {
+        return;
+    }
+
+    /* call the application requested state transition only once*/
+    if (bEcatWaitForAlControlRes == FALSE && u8LocalErrorState == alStatus && u16LocalErrorCode == alStatusCode)
+    {
+        return;
+    }
+    /*ECATCHANGE_END(V5.13) ESM1*/
 
 
     if(bEcatWaitForAlControlRes)
@@ -2345,9 +2411,16 @@ void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
             In case on an local error force ESM timeout*/
             if(alStatusCode != 0)
             {
-                bLocalErrorFlag = TRUE;
+                /*ECATCHANGE_START(V5.13) ESM1*/
+                u8LocalErrorState = (alStatus & STATE_MASK);
+                /*ECATCHANGE_END(V5.13) ESM1*/
                 u16LocalErrorCode = alStatusCode;
                 EsmTimeoutCounter = 0;
+            }
+            else
+            { 
+                u8LocalErrorState = 0;
+                u16LocalErrorCode = alStatusCode;
             }
         }
         else
@@ -2356,7 +2429,9 @@ void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
 
             if(alStatusCode != 0)
             {
-                bLocalErrorFlag = TRUE;
+                /*ECATCHANGE_START(V5.13) ESM1*/
+                u8LocalErrorState = (alStatus & STATE_MASK);
+                /*ECATCHANGE_END(V5.13) ESM1*/
                 u16LocalErrorCode = alStatusCode;
 
                 /*State transition failed due to local application reasons*/
@@ -2392,10 +2467,10 @@ void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
                         bMbxRunning = TRUE;
                     break;
                     case PREOP_2_SAFEOP:
-/*ECATCHANGE_START(V5.12) ESM4*/
+/*ECATCHANGE_START(V5.13) ECAT1*/
+/*ECATCHANGE_END(V5.13) ECAT1*/
                         /* initialize the AL Event Mask register (0x204) */
                         SetALEventMask(u16ALEventMask);
-/*ECATCHANGE_END(V5.12) ESM4*/
                         bEcatInputUpdateRunning = TRUE;
                     break;
                     case SAFEOP_2_OP:
@@ -2403,7 +2478,8 @@ void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
                     break;
                 }
 
-                /*In case of a failed state transition the */
+
+
                 Status =  (UINT8)(nEcatStateTrans & STATE_MASK);
             }
                 /*Pending state transition finished => write AL Status and AL Status Code*/
@@ -2413,34 +2489,45 @@ void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
                 {
                     Status |= STATE_CHANGE;
                 }
+/*ECATCHANGE_START(V5.13) ECAT3*/
+                else if (u8LocalErrorState != 0)
+                {
+                    /*a local error is cleared*/
+                    /*ECATCHANGE_START(V5.13) ESM1*/
+                    u8LocalErrorState = 0;
+                    /*ECATCHANGE_END(V5.13) ESM1*/
+                    u16LocalErrorCode = 0x00;
+                }
+/*ECATCHANGE_END(V5.13) ECAT3*/
 
                 SetALStatus(Status,alStatusCode);
 
-        }// state transition need to be completed by the local application
-    }//State transition pending
+        }/*state transition need to be completed by the local application*/
+    }/*State transition pending*/
     else
     {
-        if ( alStatusCode != 0 )
+        /*ECATCHANGE_START(V5.13) ESM1*/
+        if ( alStatusCode != 0 && ((alStatus & STATE_MASK) != STATE_OP) && STATE_VALID(alStatus))
         {
-            bLocalErrorFlag = TRUE;
+            u8LocalErrorState = (alStatus & STATE_MASK);
+            /*ECATCHANGE_END(V5.13) ESM1*/
             u16LocalErrorCode = alStatusCode;
 
-/*ECATCHANGE_START(V5.12) ESM1*/    
-            if (((nAlStatus & STATE_CHANGE) != STATE_CHANGE) || ((alStatus & STATE_MASK) < (nAlStatus & STATE_MASK)))
+            /*trigger state transition only state transition from OP to lower state (for all other transitions the corresponding state transition functions shall be used)*/
+            if ((nAlStatus & STATE_MASK) == STATE_OP)
             {
-                /* Local error has happened, we change the state if necessary */
-
                /* no error pending and the target state is lower than the current one*/
                 AL_ControlInd(alStatus, alStatusCode);
             }
-/*ECATCHANGE_END(V5.12) ESM1*/    
         }
-        else if (bLocalErrorFlag)
+        /*ECATCHANGE_START(V5.13) ESM1*/
+        else if (u8LocalErrorState != 0)
         {
             /*a local error is gone*/
-            bLocalErrorFlag = FALSE;
+            u8LocalErrorState = 0;
             u16LocalErrorCode = 0x00;
         }
+        /*ECATCHANGE_END(V5.13) ESM1*/
     }
 }
 
@@ -2453,7 +2540,6 @@ void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode)
 void ECAT_Init(void)
 {
     UINT8 i;
-
     /*Get Maximum Number of SyncManagers and supported DPRAM size*/
     {
     UINT32 TmpVar = 0;
@@ -2466,6 +2552,7 @@ void ECAT_Init(void)
     //get max address (register + DPRAM size in Byte (in the register it is stored in KB))
     nMaxEscAddress = (UINT16)(((TmpVar & ESC_DPRAM_SIZE_MASK) >> ESC_DPRAM_SIZE_SHIFT) << 10) + 0xFFF;
     }
+
 
     /* Get EEPROM loaded information */
     UpdateEEPROMLoadedState();
@@ -2485,7 +2572,6 @@ void ECAT_Init(void)
     bEcatFirstOutputsReceived = FALSE;
      bEcatOutputUpdateRunning = FALSE;
      bEcatInputUpdateRunning = FALSE;
-     bExplicitDevIdRequested = FALSE;
     bWdTrigger = FALSE;
     EcatWdValue = 0;
     Sync0WdCounter = 0;
@@ -2493,7 +2579,10 @@ void ECAT_Init(void)
     Sync1WdCounter = 0;
     Sync1WdValue = 0;
     bDcSyncActive = FALSE;
-    bLocalErrorFlag = FALSE;
+
+    /*ECATCHANGE_START(V5.13) ESM1*/
+    u8LocalErrorState = 0;
+    /*ECATCHANGE_END(V5.13) ESM1*/
     u16LocalErrorCode = 0x00;
 
     u16ALEventMask = 0;
@@ -2511,6 +2600,8 @@ void ECAT_Init(void)
     /* initialize the COE part */
     COE_Init();
 
+/*ECATCHANGE_START(V5.13) ECAT1*/
+/*ECATCHANGE_END(V5.13) ECAT1*/
     /*reset AL event mask*/
     ResetALEventMask(0);
 }
@@ -2524,7 +2615,10 @@ void ECAT_Main(void)
 {
     UINT16 ALEventReg;
     UINT16 EscAlControl = 0x0000;
+/*ECATCHANGE_START(V5.13) MBX1*/
      UINT32 sm1Activate = SM_SETTING_ENABLE_VALUE;
+     UINT32 sm1Status = 0; /*SM1 status need to be read (not MBX_READ_EVENT) to handle readframes with invalid CRCs*/
+/*ECATCHANGE_END(V5.13) MBX1*/
 
 
     /* check if services are stored in the mailbox */
@@ -2534,9 +2628,13 @@ void ECAT_Main(void)
     if ( bMbxRunning )
     {
         /* Slave is at least in PREOP, Mailbox is running */
+
+/*ECATCHANGE_START(V5.13) MBX1*/
         /*get registers 0x80C:0x80F and mask for SM active state (this is required to access an valid 32bit address)*/
         HW_EscReadDWord(sm1Activate,(ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
         sm1Activate = SWAPDWORD(sm1Activate);
+        sm1Status = sm1Activate;
+/*ECATCHANGE_END(V5.13) MBX1*/
     }
 
     /* Read AL Event-Register from ESC */
@@ -2553,19 +2651,20 @@ void ECAT_Main(void)
         /* AL Control event is set, get the AL Control register sent by the Master to acknowledge the event
           (that the corresponding bit in the AL Event register will be reset) */
         UINT32 tmpVal = 0;
+
         HW_EscReadDWord( tmpVal, ESC_AL_CONTROL_OFFSET);
         EscAlControl = (UINT16) SWAPDWORD(tmpVal);
 
-    /*Evaluate if register 0x120 Bit5 (Request Explicit DeviceID) is set*/
-    bExplicitDevIdRequested = ((EscAlControl & (UINT16)STATE_DEVID)>>5);
+
 
         /* reset AL Control event and the SM Change event (because the Sync Manager settings will be checked
            in AL_ControlInd, too)*/
-        ALEventReg &= ~((AL_CONTROL_EVENT) | (SM_CHANGE_EVENT));
+            ALEventReg &= ~((AL_CONTROL_EVENT) | (SM_CHANGE_EVENT));
 
-        AL_ControlInd((UINT8)EscAlControl, 0); /* in AL_ControlInd the state transition will be checked and done */
-        
-        /* SM-Change-Event was handled too */
+            AL_ControlInd((UINT8)EscAlControl, 0); /* in AL_ControlInd the state transition will be checked and done */
+
+            /* SM-Change-Event was handled too */
+
     }
 
     if ( (ALEventReg & SM_CHANGE_EVENT) && !bEcatWaitForAlControlRes && (nAlStatus & STATE_CHANGE) == 0 && (nAlStatus & ~STATE_CHANGE) != STATE_INIT )
@@ -2597,7 +2696,10 @@ void ECAT_Main(void)
                 AL_ControlInd(nAlStatus & STATE_MASK, 0);
             }
 
-        if ( ALEventReg & (MAILBOX_READ_EVENT) )
+/*ECATCHANGE_START(V5.13) MBX1*/
+        if (((sm1Status & SM_STATUS_MBX_BUFFER_FULL) == 0)
+            && bSendMbxIsFull) 
+/*ECATCHANGE_END(V5.13) MBX1*/
         {
             /* SM 1 (Mailbox Read) event is set, when the mailbox was read from the master,
                to acknowledge the event the first byte of the mailbox has to be written,
@@ -2611,28 +2713,29 @@ void ECAT_Main(void)
             MBX_MailboxReadInd();
         }
 
-        /* bMbxRepeatToggle holds the last state of the Repeat Bit (Bit 1) */
+            /* bMbxRepeatToggle holds the last state of the Repeat Bit (Bit 1) */
 
-        if ( ( (sm1Activate & SM_SETTING_REPAET_REQ_MASK) && !bMbxRepeatToggle )
-            ||( !(sm1Activate & SM_SETTING_REPAET_REQ_MASK) && bMbxRepeatToggle ))
-        {
-            /* Repeat Bit (Bit 1) has toggled, there is a repeat request, in MBX_MailboxRepeatReq the correct
-               response will put in the send mailbox again */
-            MBX_MailboxRepeatReq();
-            /* acknowledge the repeat request after the send mailbox was updated by writing the Repeat Bit
-               in the Repeat Ack Bit (Bit 1) of the PDI Ctrl-Byte of SM 1 (Register 0x80F) */
-            if (bMbxRepeatToggle)
+            if (((sm1Activate & SM_SETTING_REPAET_REQ_MASK) && !bMbxRepeatToggle)
+                || (!(sm1Activate & SM_SETTING_REPAET_REQ_MASK) && bMbxRepeatToggle))
             {
-                sm1Activate |= SM_SETTING_REPEAT_ACK; //set repeat acknowledge bit (bit 25)
-            }
-            else
-            {
-                sm1Activate &= ~SM_SETTING_REPEAT_ACK; //clear repeat acknowledge bit (bit 25)
+                /* Repeat Bit (Bit 1) has toggled, there is a repeat request, in MBX_MailboxRepeatReq the correct
+                   response will put in the send mailbox again */
+                MBX_MailboxRepeatReq();
+                /* acknowledge the repeat request after the send mailbox was updated by writing the Repeat Bit
+                   in the Repeat Ack Bit (Bit 1) of the PDI Ctrl-Byte of SM 1 (Register 0x80F) */
+                if (bMbxRepeatToggle)
+                {
+                    sm1Activate |= SM_SETTING_REPEAT_ACK; //set repeat acknowledge bit (bit 25)
+                }
+                else
+                {
+                    sm1Activate &= ~SM_SETTING_REPEAT_ACK; //clear repeat acknowledge bit (bit 25)
+                }
+
+                sm1Activate = SWAPDWORD(sm1Activate);
+                HW_EscWriteDWord(sm1Activate, (ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
             }
 
-            sm1Activate = SWAPDWORD(sm1Activate);
-            HW_EscWriteDWord(sm1Activate,(ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
-        }
 
         /* Reload the AlEvent because it may be changed due to a SM disable, enable in case of an repeat request */
         ALEventReg = HW_GetALEventRegister();

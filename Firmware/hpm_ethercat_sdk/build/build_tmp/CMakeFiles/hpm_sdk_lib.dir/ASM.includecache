@@ -1,0 +1,10 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/hpm_sdk_localized_for_hpm5e00evk/drivers/src/hpm_tfa_drv.S
+

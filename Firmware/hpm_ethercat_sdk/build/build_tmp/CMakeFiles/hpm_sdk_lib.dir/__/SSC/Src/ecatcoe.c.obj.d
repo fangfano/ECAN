@@ -1,0 +1,27 @@
+build_tmp/CMakeFiles/hpm_sdk_lib.dir/__/SSC/Src/ecatcoe.c.obj: \
+ /home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/SSC/Src/ecatcoe.c \
+ /home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/SSC/Src/ecat_def.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/stdlib.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/machine/ieeefp.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/_ansi.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/newlib.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/_newlib_version.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/config.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/features.h \
+ /home/robot/riscv-gnu-toolchain/lib/gcc/riscv32-unknown-elf/13.2.0/include/stddef.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/reent.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/_ansi.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/_types.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/machine/_types.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/machine/_default_types.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/lock.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/cdefs.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/machine/stdlib.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/alloca.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/string.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/_locale.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/strings.h \
+ /home/robot/riscv-gnu-toolchain/riscv32-unknown-elf/include/sys/string.h \
+ /home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/SSC/Src/sdoserv.h \
+ /home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/SSC/Src/ecatcoe.h \
+ /home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/SSC/Src/mailbox.h

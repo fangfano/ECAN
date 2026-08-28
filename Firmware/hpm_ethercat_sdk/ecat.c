@@ -127,29 +127,11 @@ int main(void)
     bRunApplication = TRUE;
     /* Execute the stack */
     while (bRunApplication == TRUE) {
-        /* Process CAN0 receive - get any pending messages */
-        can_app_process_can0_receive();
-
-        /* Process CAN0 transmit - send TxCan0 data to CAN0 */
-        can_app_process_txcan_transmit();
-
-        /* Process CAN1 receive - get any pending messages */
-        can_app_process_can1_receive();
-
-        /* Process CAN1 transmit - send TxCan1 data to CAN1 */
-        can_app_process_txcan1_transmit();
-
-        /* Process CAN2 receive - get any pending messages */
-        can_app_process_can2_receive();
-
-        /* Process CAN2 transmit - send TxCan2 data to CAN2 */
-        can_app_process_txcan2_transmit();
-
-        /* Process CAN3 receive - get any pending messages */
-        can_app_process_can3_receive();
-
-        /* Process CAN3 transmit - send TxCan3 data to CAN3 */
-        can_app_process_txcan3_transmit();
+        /* Process all 4 CAN buses: TX (if triggered) + RX (FIFO drain + route) */
+        can_app_process_bus(0);
+        can_app_process_bus(1);
+        can_app_process_bus(2);
+        can_app_process_bus(3);
 
         /* Run EtherCAT stack main loop */
         MainLoop();

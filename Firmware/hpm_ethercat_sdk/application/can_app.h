@@ -26,195 +26,55 @@ extern "C" {
 #define CAN_LED_ACTIVITY_TIMEOUT_MS (100)   /* Timeout to stop blinking: 100ms */
 
 /**
- * @brief Initialize CAN application
+ * @brief Initialize CAN application (LEDs, timer, CAN channels)
  */
 void can_app_init(void);
 
-
-
 /**
- * @brief Initialize CAN0 for continuous receive mode
- *
- * @return hpm_stat_t Status of the operation
+ * @brief Initialize CANx for continuous receive mode (ch0/1: CANFD, ch2/3: classic)
  */
 hpm_stat_t can_app_init_can0_receive(void);
-
-/**
- * @brief Check and process CAN0 received messages
- *
- * This function should be called periodically to check for new CAN messages
- * and update the receive buffer.
- */
-void can_app_process_can0_receive(void);
-
-/**
- * @brief Get pointer to CAN0 receive buffer
- *
- * @return uint8_t* Pointer to receive buffer (30 bytes for CAN data)
- */
-uint8_t *can_app_get_can0_rx_buffer(void);
-
-/**
- * @brief Get pointer to CAN1 receive buffer (used for overflow from CAN0)
- *
- * @return uint8_t* Pointer to receive buffer (30 bytes for CAN data)
- */
-uint8_t *can_app_get_can1_rx_buffer(void);
-
-/**
- * @brief Get pointer to CAN2 receive buffer (used for overflow from CAN1)
- *
- * @return uint8_t* Pointer to receive buffer (30 bytes for CAN data)
- */
-uint8_t *can_app_get_can2_rx_buffer(void);
-
-/**
- * @brief Get pointer to CAN3 receive buffer (used for overflow from CAN2)
- *
- * @return uint8_t* Pointer to receive buffer (30 bytes for CAN data)
- */
-uint8_t *can_app_get_can3_rx_buffer(void);
-
-/**
- * @brief Get CAN0 message status flags
- *
- * @return uint32_t Status flags (bit 0: new data available)
- */
-uint32_t can_app_get_can0_status(void);
-
-/**
- * @brief Clear CAN0 new data flag
- */
-void can_app_clear_can0_new_data_flag(void);
-
-/**
- * @brief Initialize CAN0 for transmit mode
- *
- * @return hpm_stat_t Status of operation
- */
-hpm_stat_t can_app_init_can0_transmit(void);
-
-/**
- * @brief Process and transmit TxCan0 data to CAN0
- *
- * This function reads data from the TxCan0 buffer and sends it as a CAN FD frame
- */
-void can_app_process_txcan_transmit(void);
-
-/**
- * @brief Trigger CAN0 transmit pending flag
- *
- * This function should be called when new TxCan0 data is available
- */
-void can_app_trigger_transmit(void);
-
-/**
- * @brief Initialize CAN1 for continuous receive mode
- *
- * @return hpm_stat_t Status of the operation
- */
 hpm_stat_t can_app_init_can1_receive(void);
-
-/**
- * @brief Check and process CAN1 received messages
- *
- * This function should be called periodically to check for new CAN messages
- * and update the receive buffer.
- */
-void can_app_process_can1_receive(void);
-
-/**
- * @brief Initialize CAN1 for transmit mode
- *
- * @return hpm_stat_t Status of operation
- */
-hpm_stat_t can_app_init_can1_transmit(void);
-
-/**
- * @brief Process and transmit TxCan4 data to CAN1
- *
- * This function reads data from the TxCan4/5/6 buffers and sends it as a CAN FD frame
- */
-void can_app_process_txcan1_transmit(void);
-
-/**
- * @brief Trigger CAN1 transmit pending flag
- *
- * This function should be called when new TxCan4 data is available
- */
-void can_app_trigger_can1_transmit(void);
-
-/**
- * @brief Initialize CAN2 for continuous receive mode
- *
- * @return hpm_stat_t Status of the operation
- */
 hpm_stat_t can_app_init_can2_receive(void);
-
-/**
- * @brief Check and process CAN2 received messages
- *
- * This function should be called periodically to check for new CAN messages
- * and update the receive buffer.
- */
-void can_app_process_can2_receive(void);
-
-/**
- * @brief Initialize CAN2 for transmit mode
- *
- * @return hpm_stat_t Status of operation
- */
-hpm_stat_t can_app_init_can2_transmit(void);
-
-/**
- * @brief Process and transmit TxCan7 data to CAN2
- *
- * This function reads data from the TxCan7/8/9 buffers and sends it as a CAN FD frame
- */
-void can_app_process_txcan2_transmit(void);
-
-/**
- * @brief Trigger CAN2 transmit pending flag
- *
- * This function should be called when new TxCan7 data is available
- */
-void can_app_trigger_can2_transmit(void);
-
-/**
- * @brief Initialize CAN3 for continuous receive mode
- *
- * @return hpm_stat_t Status of the operation
- */
 hpm_stat_t can_app_init_can3_receive(void);
 
 /**
- * @brief Check and process CAN3 received messages
- *
- * This function should be called periodically to check for new CAN messages
- * and update the receive buffer.
+ * @brief Initialize CANx for transmit mode (ch0/1: CANFD, ch2/3: classic)
  */
-void can_app_process_can3_receive(void);
-
-/**
- * @brief Initialize CAN3 for transmit mode
- *
- * @return hpm_stat_t Status of operation
- */
+hpm_stat_t can_app_init_can0_transmit(void);
+hpm_stat_t can_app_init_can1_transmit(void);
+hpm_stat_t can_app_init_can2_transmit(void);
 hpm_stat_t can_app_init_can3_transmit(void);
 
 /**
- * @brief Process and transmit TxCan10 data to CAN3
+ * @brief Trigger a bus to scan its TxPDO and send non-zero-ID slots.
  *
- * This function reads data from the TxCan10/11/12 buffers and sends it as a CAN FD frame
+ * Called from APPL_OutputMapping after the master writes the PDO region.
+ * Sets a per-bus pending flag; can_app_process_bus consumes it.
  */
-void can_app_process_txcan3_transmit(void);
+void can_app_trigger_transmit(void);
+void can_app_trigger_can1_transmit(void);
+void can_app_trigger_can2_transmit(void);
+void can_app_trigger_can3_transmit(void);
 
 /**
- * @brief Trigger CAN3 transmit pending flag
+ * @brief Unified per-bus TX+RX processor.
  *
- * This function should be called when new TxCan10 data is available
+ * TX: if triggered this iteration, scan 7 slots and send each slot whose
+ *     CAN ID (bytes 0..1 of the 11-byte entry) is non-zero. Slots with
+ *     CAN ID == 0 are skipped but their previously learned CAN ID is
+ *     preserved so RX routing keeps working.
+ *
+ * RX: drain the FIFO. For each frame, find the slot whose last TX used
+ *     that CAN ID and write the 11-byte status into that slot's RxPDO.
+ *     Frames whose CAN ID was never TX-ed by any slot are discarded.
+ *
+ * Call once per main-loop iteration for each of the 4 buses; they are
+ * independent and effectively concurrent.
+ *
+ * @param ch CAN channel index (0..3)
  */
-void can_app_trigger_can3_transmit(void);
+void can_app_process_bus(uint32_t ch);
 
 #ifdef __cplusplus
 }

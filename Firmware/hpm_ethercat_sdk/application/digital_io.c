@@ -40,6 +40,7 @@ void APPL_SetLed(UINT32 value,UINT32 value1);
 
 static UINT32 timer_500ms_counter = 0;
 static UINT32 timer_500ms_flag = 0;
+extern UINT16 aPdInputData[(MAX_PD_INPUT_SIZE>>1)];
 
 /*--------------------------------------------------------------------------------------
 ------
@@ -264,50 +265,44 @@ void APPL_InputMapping(UINT16 *pData)
 {
     uint8_t *pData8 = (uint8_t *)pData;
 
-    /* Copy CAN0 RxCan objects to ESC input process data (75 bytes total, offset 0) */
-    if (SIZEOF(RxCan00x6000) > 0) {
-        MEMCPY(&pData8[0], &RxCan00x6000, SIZEOF(RxCan00x6000));
-    }
-    if (SIZEOF(RxCan10x601E) > 0 && nPdInputSize >= 60) {
-        MEMCPY(&pData8[30], &RxCan10x601E, SIZEOF(RxCan10x601E));
-    }
-    if (SIZEOF(RxCan20x603C) > 0 && nPdInputSize >= 75) {
-        MEMCPY(&pData8[60], &RxCan20x603C, 15);
-    }
-
-    /* Copy CAN1 RxCan objects to ESC input process data (75 bytes total, offset 75) */
-    /* RxCan2[15-29] (15 bytes) already copied above, now copy from offset 75 */
-    if (SIZEOF(RxCan20x603C) > 0 && nPdInputSize >= 90) {
-        MEMCPY(&pData8[75], &RxCan20x603C[15], 15);
-    }
-    if (SIZEOF(RxCan30x605A) > 0 && nPdInputSize >= 120) {
-        MEMCPY(&pData8[90], &RxCan30x605A, SIZEOF(RxCan30x605A));
-    }
-    if (SIZEOF(RxCan40x6078) > 0 && nPdInputSize >= 150) {
-        MEMCPY(&pData8[120], &RxCan40x6078, SIZEOF(RxCan40x6078));
+    if (nPdInputSize >= 112) {
+        MEMCPY(&pData8[0],   &RxCanGroup110x6000, 16);
+        MEMCPY(&pData8[16],  &RxCanGroup120x6010, 16);
+        MEMCPY(&pData8[32],  &RxCanGroup130x6020, 16);
+        MEMCPY(&pData8[48],  &RxCanGroup140x6030, 16);
+        MEMCPY(&pData8[64],  &RxCanGroup150x6040, 16);
+        MEMCPY(&pData8[80],  &RxCanGroup160x6050, 16);
+        MEMCPY(&pData8[96],  &RxCanGroup170x6060, 16);
     }
 
-    /* Copy CAN2 RxCan objects to ESC input process data (75 bytes total, offset 150) */
-    if (SIZEOF(RxCan50x6096) > 0 && nPdInputSize >= 180) {
-        MEMCPY(&pData8[150], &RxCan50x6096, SIZEOF(RxCan50x6096));
-    }
-    if (SIZEOF(RxCan60x60B4) > 0 && nPdInputSize >= 210) {
-        MEMCPY(&pData8[180], &RxCan60x60B4, SIZEOF(RxCan60x60B4));
-    }
-    if (SIZEOF(RxCan70x60D2) > 0 && nPdInputSize >= 225) {
-        MEMCPY(&pData8[210], &RxCan70x60D2, 15);
+    if (nPdInputSize >= 224) {
+        MEMCPY(&pData8[112], &RxCanGroup210x6070, 16);
+        MEMCPY(&pData8[128], &RxCanGroup220x6080, 16);
+        MEMCPY(&pData8[144], &RxCanGroup230x6090, 16);
+        MEMCPY(&pData8[160], &RxCanGroup240x60A0, 16);
+        MEMCPY(&pData8[176], &RxCanGroup250x60B0, 16);
+        MEMCPY(&pData8[192], &RxCanGroup260x60C0, 16);
+        MEMCPY(&pData8[208], &RxCanGroup270x60D0, 16);
     }
 
-    /* Copy CAN3 RxCan objects to ESC input process data (75 bytes total, offset 225) */
-    /* RxCan7[15-29] (15 bytes) already copied above, now copy from offset 225 */
-    if (SIZEOF(RxCan70x60D2) > 0 && nPdInputSize >= 240) {
-        MEMCPY(&pData8[225], &RxCan70x60D2[15], 15);
+    if (nPdInputSize >= 336) {
+        MEMCPY(&pData8[224], &RxCanGroup310x60E0, 16);
+        MEMCPY(&pData8[240], &RxCanGroup320x60F0, 16);
+        MEMCPY(&pData8[256], &RxCanGroup330x6100, 16);
+        MEMCPY(&pData8[272], &RxCanGroup340x6110, 16);
+        MEMCPY(&pData8[288], &RxCanGroup350x6120, 16);
+        MEMCPY(&pData8[304], &RxCanGroup360x6130, 16);
+        MEMCPY(&pData8[320], &RxCanGroup370x6140, 16);
     }
-    if (SIZEOF(RxCan80x60F0) > 0 && nPdInputSize >= 270) {
-        MEMCPY(&pData8[240], &RxCan80x60F0, SIZEOF(RxCan80x60F0));
-    }
-    if (SIZEOF(RxCan90x610E) > 0 && nPdInputSize >= 300) {
-        MEMCPY(&pData8[270], &RxCan90x610E, SIZEOF(RxCan90x610E));
+
+    if (nPdInputSize >= 448) {
+        MEMCPY(&pData8[336], &RxCanGroup410x6150, 16);
+        MEMCPY(&pData8[352], &RxCanGroup420x6160, 16);
+        MEMCPY(&pData8[368], &RxCanGroup430x6170, 16);
+        MEMCPY(&pData8[384], &RxCanGroup440x6180, 16);
+        MEMCPY(&pData8[400], &RxCanGroup450x6190, 16);
+        MEMCPY(&pData8[416], &RxCanGroup460x61A0, 16);
+        MEMCPY(&pData8[432], &RxCanGroup470x61B0, 16);
     }
 }
 
@@ -319,55 +314,58 @@ void APPL_OutputMapping(UINT16 *pData)
 {
     uint8_t *pData8 = (uint8_t *)pData;
 
-    /* Copy to CAN0 TxCan objects (75 bytes total, offset 0) */
-    MEMCPY(&TxCan00x7000, &pData8[0], SIZEOF(TxCan00x7000));
-    MEMCPY(&TxCan10x701E, &pData8[30], SIZEOF(TxCan10x701E));
-    MEMCPY(&TxCan20x703C, &pData8[60], 15);
-    can_app_trigger_transmit();
+    if (nPdOutputSize >= 112) {
+        MEMCPY(&TxCanGroup110x7000, &pData8[0],   16);
+        MEMCPY(&TxCanGroup120x7010, &pData8[16],  16);
+        MEMCPY(&TxCanGroup130x7020, &pData8[32],  16);
+        MEMCPY(&TxCanGroup140x7030, &pData8[48],  16);
+        MEMCPY(&TxCanGroup150x7040, &pData8[64],  16);
+        MEMCPY(&TxCanGroup160x7050, &pData8[80],  16);
+        MEMCPY(&TxCanGroup170x7060, &pData8[96],  16);
+        can_app_trigger_transmit();
+    }
 
-    /* Copy to CAN1 TxCan objects (75 bytes total, offset 75) */
-    if (nPdOutputSize >= 90) {
-        MEMCPY(&TxCan20x703C[15], &pData8[75], 15);
+    if (nPdOutputSize >= 224) {
+        MEMCPY(&TxCanGroup210x7070, &pData8[112], 16);
+        MEMCPY(&TxCanGroup220x7080, &pData8[128], 16);
+        MEMCPY(&TxCanGroup230x7090, &pData8[144], 16);
+        MEMCPY(&TxCanGroup240x70A0, &pData8[160], 16);
+        MEMCPY(&TxCanGroup250x70B0, &pData8[176], 16);
+        MEMCPY(&TxCanGroup260x70C0, &pData8[192], 16);
+        MEMCPY(&TxCanGroup270x70D0, &pData8[208], 16);
+        can_app_trigger_can1_transmit();
     }
-    if (nPdOutputSize >= 120) {
-        MEMCPY(&TxCan30x705A, &pData8[90], SIZEOF(TxCan30x705A));
-    }
-    if (nPdOutputSize >= 150) {
-        MEMCPY(&TxCan40x7078, &pData8[120], SIZEOF(TxCan40x7078));
-    }
-    can_app_trigger_can1_transmit();
 
-    /* Copy to CAN2 TxCan objects (75 bytes total, offset 150) */
-    if (nPdOutputSize >= 180) {
-        MEMCPY(&TxCan50x7096, &pData8[150], SIZEOF(TxCan50x7096));
+    if (nPdOutputSize >= 336) {
+        MEMCPY(&TxCanGroup310x70E0, &pData8[224], 16);
+        MEMCPY(&TxCanGroup320x70F0, &pData8[240], 16);
+        MEMCPY(&TxCanGroup330x7100, &pData8[256], 16);
+        MEMCPY(&TxCanGroup340x7110, &pData8[272], 16);
+        MEMCPY(&TxCanGroup350x7120, &pData8[288], 16);
+        MEMCPY(&TxCanGroup360x7130, &pData8[304], 16);
+        MEMCPY(&TxCanGroup370x7140, &pData8[320], 16);
+        can_app_trigger_can2_transmit();
     }
-    if (nPdOutputSize >= 210) {
-        MEMCPY(&TxCan60x70B4, &pData8[180], SIZEOF(TxCan60x70B4));
-    }
-    if (nPdOutputSize >= 225) {
-        MEMCPY(&TxCan70x70D2, &pData8[210], 15);
-    }
-    can_app_trigger_can2_transmit();
 
-    /* Copy to CAN3 TxCan objects (75 bytes total, offset 225) */
-    if (nPdOutputSize >= 240) {
-        MEMCPY(&TxCan70x70D2[15], &pData8[225], 15);
+    if (nPdOutputSize >= 448) {
+        MEMCPY(&TxCanGroup410x7150, &pData8[336], 16);
+        MEMCPY(&TxCanGroup420x7160, &pData8[352], 16);
+        MEMCPY(&TxCanGroup430x7170, &pData8[368], 16);
+        MEMCPY(&TxCanGroup440x7180, &pData8[384], 16);
+        MEMCPY(&TxCanGroup450x7190, &pData8[400], 16);
+        MEMCPY(&TxCanGroup460x71A0, &pData8[416], 16);
+        MEMCPY(&TxCanGroup470x71B0, &pData8[432], 16);
+        can_app_trigger_can3_transmit();
     }
-    if (nPdOutputSize >= 270) {
-        MEMCPY(&TxCan80x70F0, &pData8[240], SIZEOF(TxCan80x70F0));
-    }
-    if (nPdOutputSize >= 300) {
-        MEMCPY(&TxCan90x710E, &pData8[270], SIZEOF(TxCan90x710E));
-    }
-    can_app_trigger_can3_transmit();
 }
+
 
 /**
 \brief    Called from synchronization ISR or mainloop
 */
 void APPL_Application(void)
 {
-    APPL_SetLed((UINT32)(TxCan00x7000[0] & 0xFFFFFFFF),(UINT32)(TxCan00x7000[1] & 0xFFFFFFFF));
+    APPL_SetLed(0, 0);
 }
 
 /**
@@ -389,7 +387,10 @@ void APPL_CheckTimer500ms(void)
 {
     if (timer_500ms_flag) {
         timer_500ms_flag = 0;
-        HW_EscWriteIsr(((MEM_ADDR)&RxCan00x6000), nEscAddrInputData, nPdInputSize);
+        if (bEcatInputUpdateRunning && (nEscAddrInputData != 0) && (nPdInputSize != 0)) {
+            APPL_InputMapping(aPdInputData);
+            HW_EscWriteIsr((MEM_ADDR)aPdInputData, nEscAddrInputData, nPdInputSize);
+        }
     }
 }
 
@@ -407,7 +408,6 @@ UINT16 APPL_GetDeviceID(void)
 }
 #endif
 
-extern UINT16 aPdInputData[(MAX_PD_INPUT_SIZE>>1)];
 void APPL_SetLed(UINT32 value,UINT32 value1)
 {
     UINT8 led0 = ((value & 1) ?  BOARD_ECAT_OUT_ON_LEVEL : !BOARD_ECAT_OUT_ON_LEVEL);
@@ -416,7 +416,10 @@ void APPL_SetLed(UINT32 value,UINT32 value1)
     gpio_write_pin(BOARD_ECAT_OUT1_GPIO, BOARD_ECAT_OUT1_GPIO_PORT_INDEX, BOARD_ECAT_OUT1_GPIO_PIN_INDEX, led0);
     gpio_write_pin(BOARD_ECAT_OUT2_GPIO, BOARD_ECAT_OUT2_GPIO_PORT_INDEX, BOARD_ECAT_OUT2_GPIO_PIN_INDEX, led1);
     
-    HW_EscWriteIsr(((MEM_ADDR )&RxCan00x6000), nEscAddrInputData, nPdInputSize );
+    if (bEcatInputUpdateRunning && (nEscAddrInputData != 0) && (nPdInputSize != 0)) {
+        APPL_InputMapping(aPdInputData);
+        HW_EscWriteIsr((MEM_ADDR)aPdInputData, nEscAddrInputData, nPdInputSize);
+    }
 }
 
 UINT32 APPL_GetDipSw(void)
@@ -473,4 +476,3 @@ void main(void)
 }
 #endif /* #if USE_DEFAULT_MAIN */
 /** @} */
-

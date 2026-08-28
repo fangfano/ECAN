@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/hpm_csr_regs.h
+
+/home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/toolchains/gcc/start.S
+hpm_csr_regs.h
+/home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/toolchains/gcc/hpm_csr_regs.h
+../vectors.h
+/home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/toolchains/vectors.h
+
+/home/robot/桌面/ECAN/kh-ethercat-canfdx4-op/Firmware/hpm_ethercat_sdk/hpm_sdk_localized_for_hpm5e00evk/soc/HPM5E00/HPM5E31/toolchains/vectors.h
+

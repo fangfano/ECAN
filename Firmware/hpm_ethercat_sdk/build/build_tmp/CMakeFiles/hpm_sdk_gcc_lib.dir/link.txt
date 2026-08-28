@@ -1,0 +1,1 @@
+/home/robot/riscv-gnu-toolchain/bin/riscv32-unknown-elf-ar crD ../lib/libhpm_sdk_gcc_lib.a CMakeFiles/hpm_sdk_gcc_lib.dir/soc/HPM5E00/HPM5E31/toolchains/reset.c.obj CMakeFiles/hpm_sdk_gcc_lib.dir/soc/HPM5E00/HPM5E31/toolchains/trap.c.obj

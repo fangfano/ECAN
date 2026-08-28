@@ -1,6 +1,7 @@
 /*
 * This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
 * The corresponding license agreement applies. This hint shall not be removed.
+* https://www.beckhoff.com/media/downloads/slave-stack-code/ethercat_ssc_license.pdf
 */
 
 /**
@@ -13,8 +14,10 @@
 \author EthercatSSC@beckhoff.com
 \brief Definition of the application interface functions
 
-\version 5.12
+\version 5.13
 
+<br>Changes to version V5.12:<br>
+V5.13 COE4: update default entry name handling in case of 16Bit characters, add CoE Read/write indication functions<br>
 <br>Changes to version V5.11:<br>
 V5.12 APPL1: add optional application function called from the main loop (after mbx and esm are executed)<br>
 V5.12 EEPROM3: implement a store EEPROM timeout handler<br>
@@ -69,6 +72,7 @@ V5.10.1 : Start file change log
  \brief    This function shall copy EEPROM data to the ESC EEPROM data register (0x508:0x50F/0x50B).
  \brief    The EEPROM data starting at the specified word address and the length specified in register 0x502.6
  \brief    The data shall be copied to the ESC EEPROM buffer (ESC offset 0x508)
+ \brief	   The function pointer is reset in MainInit() so it shall be set afterwards
 *////////////////////////////////////////////////////////////////////////////////////////
 PROTO UINT16 (* pAPPL_EEPROM_Read)(UINT32 wordaddr);
 
@@ -80,6 +84,7 @@ PROTO UINT16 (* pAPPL_EEPROM_Read)(UINT32 wordaddr);
 
 \brief    This function shall copy data from the ESC EEPROM data register (0x508:0x50F/0x50B) to the EEPROM memory.
 \brief    The EEPROM data starting at the specified word address and the length specified with "EEPROM_WRITE_SIZE".
+\brief	   The function pointer is reset in MainInit() so it shall be set afterwards
 *////////////////////////////////////////////////////////////////////////////////////////
 PROTO UINT16(*pAPPL_EEPROM_Write)(UINT32 wordaddr);
 
@@ -89,33 +94,53 @@ PROTO UINT16(*pAPPL_EEPROM_Write)(UINT32 wordaddr);
 
 \brief    This function shall copy the EEPROM reload information to the ESC EEPROM data register (0x508:0x50F/0x50B).
 \brief    Read the ESC data sheet for the reload information (e.g. Beckhoff IPCore ESC Datasheet section II, clause 3.45.1)
+\brief	   The function pointer is reset in MainInit() so it shall be set afterwards
 *////////////////////////////////////////////////////////////////////////////////////////
 PROTO UINT16(*pAPPL_EEPROM_Reload)(void);
 
-/*ECATCHANGE_START(V5.12) EEPROM3*/
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \brief    If EEPROM Emulation is enabled and the written data is not stored directly during 
 \brief    the EEPROM Write commands to the permanent memory this function can be used to store the EEPROM data.
 \brief    It is called 1000 ms after the last EEPROM access. Using this function shall only be used if it is 
 \brief    not possible to store the EEPROM data directly during the EEPROM write access.
-
+\brief	   The function pointer is reset in MainInit() so it shall be set afterwards
 *////////////////////////////////////////////////////////////////////////////////////////
 PROTO void(*pAPPL_EEPROM_Store)(void);
 
-/*ECATCHANGE_END(V5.12) EEPROM3*/
 
 
 
 
 
-/*ECATCHANGE_START(V5.12) APPL1*/
+/* ECATCHANGE_START(V5.13) COE4*/
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+\param     Index            Index of the object to be read
+\param     Subindex         Subindex of the object entry to be read
+\param     CompleteAccess   Indicates if the object is read with complete access
+
+\brief    The function is called before an object/entry is read
+*////////////////////////////////////////////////////////////////////////////////////////
+PROTO void(*pAPPL_CoeReadInd)(UINT16 Index, UINT8 Subindex, BOOL CompleteAccess);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/**
+\param     Index            Index of the object which was written
+\param     Subindex         Subindex of the object entry which was written
+\param     CompleteAccess   Indicates if the object was written with complete access
+
+\brief    The function is called after an object/entry was successfully written
+*////////////////////////////////////////////////////////////////////////////////////////
+PROTO void(*pAPPL_CoeWriteInd)(UINT16 Index, UINT8 Subindex, BOOL CompleteAccess);
+
+/* ECATCHANGE_END(V5.13) COE4*/
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \brief    This function is called by the SSC from the main loop
+\brief	   The function pointer is reset in MainInit() so it shall be set afterwards
 *////////////////////////////////////////////////////////////////////////////////////////
 PROTO void(*pAPPL_MainLoop)();
-/*ECATCHANGE_END(V5.12) APPL1*/
 
 /*-----------------------------------------------------------------------------------------
 ------
